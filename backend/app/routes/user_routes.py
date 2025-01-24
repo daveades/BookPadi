@@ -8,3 +8,8 @@ def create_user():
     data = request.get_json()
     user = User(**data).save()
     return jsonify(user.to_json()), 201
+
+@user_bp.route('/users/<user_id>', methods=['GET'])
+def get_user(user_id):
+    user = User.objects.get(id=user_id)
+    return jsonify(user.to_json()), 200
