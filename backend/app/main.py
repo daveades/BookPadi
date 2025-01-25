@@ -1,9 +1,8 @@
-from flask import Flask
-
+from . import create_app
 from .utils.db import init_db
 from .routes.user_routes import user_bp
 
-app = Flask(__name__)
+app = create_app()
 
 #initialize the database connection
 init_db()
