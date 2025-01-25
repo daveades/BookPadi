@@ -7,7 +7,7 @@ user_bp = Blueprint('user_bp', __name__)
 def create_user():
     data = request.get_json()
     user = User(**data).save()
-    return jsonify(user.to_json()), 201
+    return jsonify(user.to_dict()), 201
 
 @user_bp.route('/users/<user_id>', methods=['GET'])
 def get_user(user_id):
