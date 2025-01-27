@@ -1,0 +1,164 @@
+.about-container {
+    padding-top: 60px;
+    font-family: 'Inter', sans-serif;
+    color: #333;
+    line-height: 1.6;
+}
+
+.about-hero {
+    min-height: 40vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 2rem;
+}
+
+.about-hero h1 {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    animation: fadeInPermanent 1s ease-out forwards;
+}
+
+.subtitle {
+    font-size: 1.5rem;
+    color: #555;
+    animation: slideUpPermanent 0.8s ease-out 0.3s forwards;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.4;
+}
+
+.story-section {
+    padding: 4rem 0;
+    background-color: white;
+}
+
+.story-section p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #444;
+    max-width: 800px;
+    margin: 0 auto;
+    animation: fadeInPermanent 1s ease-out 0.5s forwards;
+}
+
+.mission-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.mission-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: all 0.3s ease;
+    animation: fadeInPermanent 1s ease-out forwards;
+}
+
+.mission-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.mission-card h3 {
+    font-size: 1.4rem;
+    margin: 1rem 0;
+    color: #007bff;
+    font-weight: 600;
+}
+
+.value-item {
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    animation: fadeInPermanent 1s ease-out forwards;
+}
+
+.value-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+.team-member {
+    text-align: center;
+    animation: fadeInPermanent 1s ease-out forwards;
+}
+
+.team-member h3 {
+    font-size: 1.3rem;
+    margin: 1rem 0 0.5rem;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.team-member p {
+    color: #666;
+    font-size: 1rem;
+}
+
+h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    color: #1a1a1a;
+    font-weight: 700;
+    animation: fadeInPermanent 1s ease-out forwards;
+}
+
+/* New permanent animations that don't fade out */
+@keyframes fadeInPermanent {
+    from { 
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUpPermanent {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Staggered animation delays */
+.mission-card:nth-child(1) { animation-delay: 0.2s; }
+.mission-card:nth-child(2) { animation-delay: 0.4s; }
+.mission-card:nth-child(3) { animation-delay: 0.6s; }
+
+.value-item:nth-child(1) { animation-delay: 0.3s; }
+.value-item:nth-child(2) { animation-delay: 0.5s; }
+.value-item:nth-child(3) { animation-delay: 0.7s; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .about-hero h1 {
+        font-size: 2.5rem;
+    }
+    
+    .subtitle {
+        font-size: 1.2rem;
+    }
+    
+    .mission-grid {
+        grid-template-columns: 1fr;
+    }
+}

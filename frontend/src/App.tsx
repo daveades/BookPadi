@@ -5,6 +5,8 @@ import SignupPage from './pages/Signup';
 import LoginPage from './pages/Login';
 import HomePage from './pages/home';
 import ContactPage from './pages/contact';
+import AboutPage from './pages/About';
+import BooksPage from './pages/books';
 import './assets/styles/pages/login.css';
 import './assets/styles/pages/signup.css';
 
@@ -20,6 +22,8 @@ const App: React.FC = () => {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/books" element={<BooksPage />} />
           </Routes>
         </main>
         <Footer />
