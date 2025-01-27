@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..models.book import Book
 from ..models.rental import Rental
 from ..models.user import User
+from datetime import datetime
 
 book_bp = Blueprint('book_bp', __name__)
 
@@ -55,5 +56,29 @@ def create_rental():
         
     except Book.DoesNotExist:
         return jsonify({"error": "Book not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@book_bp.route('/user/rentals', methods=['GET'])
+@jwt_required()
+def get_user_rentals():
+    try:
+        user_id = get_jwt_identity()
+        user = User.objects.get(id=user_id)
+        rentals = Rental.objects(user=user)
+        
+        # Calculate remaining days for each rental
+        current_time = datetime.utcnow()
+        rentals_data = []
+        
+        for rental in rentals:
+            rental_dict = rental.to_dict()
+            return_date = datetime.fromisoformat(rental_dict['return_date'].replace('Z', '+00:00'))
+            remaining_days = (return_date - current_time).days
+            rental_dict['remaining_days'] = max(0, remaining_days)
+            rentals_data.append(rental_dict)
+            
+        return jsonify(rentals_data), 200
+        
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -7,6 +7,7 @@ import HomePage from './pages/home';
 import ContactPage from './pages/contact';
 import AboutPage from './pages/About';
 import BooksPage from './pages/books';
+import LibraryPage from './pages/library';
 import './assets/styles/pages/login.css';
 import './assets/styles/pages/signup.css';
 import { AuthProvider } from './context/AuthContext';
@@ -26,6 +27,7 @@ const App: React.FC = () => {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/books" element={<BooksPage />} />
+              <Route path="/library" element={<LibraryPage />} />
             </Routes>
           </main>
           <Footer />
