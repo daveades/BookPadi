@@ -12,7 +12,9 @@ def create_app():
         r"/api/*": {
             "origins": [
                 "https://fluffy-doodle-7xjxggv9p772p7jr-3000.app.github.dev",
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "https://bookpadi.vercel.app"
+
             ],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
