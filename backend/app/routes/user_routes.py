@@ -29,7 +29,7 @@ def login():
     if user and check_password_hash(user.password, password):
         access_token = create_access_token(identity=str(user.id))
         return jsonify({
-            "access_token": access_token,
+            "token": access_token,
             "user": user.to_dict()
         }), 200
     return jsonify({"error": "Invalid email or password"}), 401
