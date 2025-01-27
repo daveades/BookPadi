@@ -23,6 +23,10 @@ const RentalModal: React.FC<RentalModalProps> = ({ book, onClose, onConfirm }) =
             <div className="rental-modal">
                 <h2>Rent "{book.title}"</h2>
                 <div className="rental-details">
+                    <div className="info-text">
+                        <p>Book Value: ${book.price.toFixed(2)}</p>
+                        <small>Rental rate is 10% of book value per day</small>
+                    </div>
                     <div className="form-group">
                         <label htmlFor="days">Rental Duration (days)</label>
                         <input
@@ -36,7 +40,7 @@ const RentalModal: React.FC<RentalModalProps> = ({ book, onClose, onConfirm }) =
                     </div>
                     <div className="price-calculation">
                         <p>Total Price: ${calculatePrice()}</p>
-                        <small>({days} days @ $${(book.price * 0.1).toFixed(2)}/day)</small>
+                        <small>({days} days @ ${(book.price * 0.1).toFixed(2)}/day)</small>
                     </div>
                 </div>
                 <div className="modal-actions">

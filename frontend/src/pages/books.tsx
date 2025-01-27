@@ -80,6 +80,7 @@ const BooksPage: React.FC = () => {
                 alert('Book rented successfully!');
             }
         } catch (err) {
+            console.error('Error renting book:', err);
             alert('Failed to rent book. Please try again.');
         }
         setSelectedBook(null);
@@ -102,7 +103,7 @@ const BooksPage: React.FC = () => {
                             <p className="author">{book.author}</p>
                             <div className="book-meta">
                                 <span className="rating">⭐ {book.rating}</span>
-                                <span className="price">${book.price}</span>
+                                <span className="price">Purchase Price: ${book.price}</span>
                             </div>
                             <button 
                                 className="rent-btn"

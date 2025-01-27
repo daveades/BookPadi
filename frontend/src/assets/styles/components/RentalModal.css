@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
 /* frontend/src/assets/styles/components/RentalModal.css */
 .rental-modal-overlay {
     position: fixed;
@@ -13,6 +15,7 @@
 }
 
 .rental-modal {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background: white;
     padding: 2rem;
     border-radius: 8px;
