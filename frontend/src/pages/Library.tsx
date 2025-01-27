@@ -37,7 +37,7 @@ const LibraryPage: React.FC = () => {
             try {
                 const token = localStorage.getItem('token');
                 const response = await axios.get(
-                    'https://fluffy-doodle-7xjxggv9p772p7jr-5000.app.github.dev/api/user/rentals',
+                    'https://bookpadi.onrender.com/api/user/rentals',
                     {
                         headers: {
                             Authorization: `Bearer ${token}`

@@ -31,7 +31,7 @@ const BookDetails: React.FC = () => {
         const fetchBook = async () => {
             try {
                 const response = await axios.get(
-                    `https://fluffy-doodle-7xjxggv9p772p7jr-5000.app.github.dev/api/books/${bookId}`
+                    `https://bookpadi.onrender.com/api/books/${bookId}`
                 );
                 setBook(response.data);
             } catch (err) {
@@ -58,7 +58,7 @@ const BookDetails: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             const response = await axios.post(
-                'https://fluffy-doodle-7xjxggv9p772p7jr-5000.app.github.dev/api/rentals',
+                'https://bookpadi.onrender.com/api/rentals',
                 {
                     book_id: book.id,
                     duration_days: days

@@ -11,7 +11,7 @@ const SignupPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await axios.post('https://fluffy-doodle-7xjxggv9p772p7jr-5000.app.github.dev/api/signup', {
+            const response = await axios.post('https://bookpadi.onrender.com/api/signup', {
                 email,
                 password
             });

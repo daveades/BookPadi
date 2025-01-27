@@ -25,7 +25,7 @@ const BooksPage: React.FC = () => {
     useEffect(() => {
         const fetchBooks = async () => {
             try {
-                const response = await axios.get('https://fluffy-doodle-7xjxggv9p772p7jr-5000.app.github.dev/api/books'); // Update URL to localhost
+                const response = await axios.get('https://bookpadi.onrender.com/api/books'); // Update URL to localhost
                 console.log('Response:', response);
                 console.log('Books data:', response.data);
                 setBooks(response.data);
@@ -64,7 +64,7 @@ const BooksPage: React.FC = () => {
             }
 
             const response = await axios.post(
-                'https://fluffy-doodle-7xjxggv9p772p7jr-5000.app.github.dev/api/rentals',
+                'https://bookpadi.onrender.com/api/rentals',
                 {
                     book_id: selectedBook.id,
                     duration_days: days

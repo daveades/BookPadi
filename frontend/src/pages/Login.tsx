@@ -13,7 +13,7 @@ const LoginPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await axios.post('https://fluffy-doodle-7xjxggv9p772p7jr-5000.app.github.dev/api/login', {
+            const response = await axios.post('https://bookpadi.onrender.com/api/login', {
                 email,
                 password
             });
