@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Header, Footer } from './components';
 import SignupPage from './pages/Signup';
+import LoginPage from './pages/Login';
+import './assets/styles/pages/login.css';
 import './assets/styles/pages/signup.css';
 
 const App: React.FC = () => {
@@ -13,7 +15,8 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<div>Home Page</div>} />
             <Route path="/signup" element={<SignupPage />} />
-            {/* Add more routes here */}
+            <Route path="/login" element={<LoginPage />} />
+            {}
           </Routes>
         </main>
         <Footer />

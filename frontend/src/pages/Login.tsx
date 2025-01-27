@@ -1,0 +1,69 @@
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
+
+const LoginPage: React.FC = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post('https://fluffy-doodle-7xjxggv9p772p7jr-5000.app.github.dev/api/login', {
+                email,
+                password
+            });
+            
+            if (response.status === 200) {
+                // Store the token in localStorage
+                localStorage.setItem('token', response.data.token);
+                navigate('/');
+            }
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Invalid credentials');
+        }
+    };
+
+    return (
+        <div className="login-container">
+            <form onSubmit={handleSubmit} className="login-form">
+                <h2>Welcome Back</h2>
+                {error && <div className="error-message">{error}</div>}
+                
+                <div className="form-group">
+                    <label htmlFor="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <button type="submit" className="login-submit-btn">
+                    Log In
+                </button>
+
+                <div className="signup-link">
+                    Don't have an account? <Link to="/signup">Sign Up</Link>
+                </div>
+            </form>
+        </div>
+    );
+};
+
+export default LoginPage;
