@@ -148,6 +148,107 @@ h2 {
 .value-item:nth-child(2) { animation-delay: 0.5s; }
 .value-item:nth-child(3) { animation-delay: 0.7s; }
 
+.values-section {
+    padding: 5rem 2rem;
+    background-color: var(--color-background);
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.value-item {
+    background: var(--color-background);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: all 0.3s ease;
+    animation: fadeInPermanent 1s ease-out forwards;
+}
+
+.value-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.value-item .icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.value-item h3 {
+    font-size: 1.4rem;
+    margin: 1rem 0;
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.team-section {
+    padding: 5rem 2rem;
+    background-color: var(--color-background);
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.team-member {
+    text-align: center;
+    animation: fadeInPermanent 1s ease-out forwards;
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.team-member:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.member-image {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    overflow: hidden;
+    border: 4px solid var(--color-primary);
+}
+
+.member-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.team-member:hover .member-image img {
+    transform: scale(1.1);
+}
+
+.team-member h3 {
+    font-family: var(--font-secondary);
+    font-size: 1.3rem;
+    margin: 1rem 0 0.5rem;
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+.team-member p {
+    color: var(--color-text-light);
+    font-size: 1rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .about-hero h1 {
@@ -160,5 +261,21 @@ h2 {
     
     .mission-grid {
         grid-template-columns: 1fr;
+    }
+
+    .values-grid {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+    }
+
+    .team-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        padding: 0 1rem;
+    }
+    
+    .member-image {
+        width: 150px;
+        height: 150px;
     }
 }

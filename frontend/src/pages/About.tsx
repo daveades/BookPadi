@@ -47,7 +47,7 @@ const AboutPage: React.FC = () => {
             <section className="values-section">
                 <div className="content-wrapper">
                     <h2>Our Values</h2>
-                    <div className="values-list">
+                    <div className="values-grid">
                         <div className="value-item">
                             <div className="icon">🎯</div>
                             <h3>Accessibility</h3>
