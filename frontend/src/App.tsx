@@ -3,10 +3,11 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Header, Footer } from './components';
 import SignupPage from './pages/Signup';
 import LoginPage from './pages/Login';
+import HomePage from './pages/home';
+import ContactPage from './pages/contact';
 import './assets/styles/pages/login.css';
 import './assets/styles/pages/signup.css';
-import HomePage from './pages/home';
-import './assets/styles/pages/home.css';
+
 
 const App: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const App: React.FC = () => {
             <Route path="/" element={<HomePage/>} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/contact" element={<ContactPage />} />
           </Routes>
         </main>
         <Footer />
