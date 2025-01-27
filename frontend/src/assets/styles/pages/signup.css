@@ -64,6 +64,22 @@
     background-color: #0056b3;
 }
 
+.login-link {
+    text-align: center;
+    margin-top: 1rem;
+    color: #666;
+}
+
+.login-link a {
+    color: #007bff;
+    text-decoration: none;
+    margin-left: 0.5rem;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
 .error-message {
     background-color: #fff3f3;
     color: #dc3545;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
 const SignupPage: React.FC = () => {
@@ -11,7 +11,7 @@ const SignupPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:5000/api/signup', {
+            const response = await axios.post('https://fluffy-doodle-7xjxggv9p772p7jr-5000.app.github.dev/api/signup', {
                 email,
                 password
             });
@@ -55,6 +55,10 @@ const SignupPage: React.FC = () => {
                 <button type="submit" className="signup-submit-btn">
                     Sign Up
                 </button>
+
+                <div className="login-link">
+                    Already have an account? <Link to="/login">Login</Link>
+                </div>
             </form>
         </div>
     );
