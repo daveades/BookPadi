@@ -1,0 +1,93 @@
+/* frontend/src/assets/styles/components/RentalModal.css */
+.rental-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.rental-modal {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.rental-modal h2 {
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.rental-details {
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #666;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.price-calculation {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.price-calculation p {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.price-calculation small {
+    color: #666;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.cancel-btn, .confirm-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.cancel-btn {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+}
+
+.confirm-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+}
+
+.confirm-btn:hover {
+    background: #0056b3;
+}

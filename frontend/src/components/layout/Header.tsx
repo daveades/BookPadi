@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
 import '../../assets/styles/components/Header.css';
-
+import { useAuth } from '../../context/AuthContext';
 
 const Header: React.FC = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { isAuthenticated, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/');
+    };
 
     return (
         <header className="header">
@@ -35,8 +42,18 @@ const Header: React.FC = () => {
                 </nav>
 
                 <div className="auth-buttons">
-                    <Link to="/login" className="login-btn">Login</Link>
-                    <Link to="/signup" className="signup-btn">Sign Up</Link>                </div>
+                    {isAuthenticated ? (
+                        <>
+                            <Link to="/library" className="library-btn">My Library</Link>
+                            <button onClick={handleLogout} className="logout-btn">Logout</button>
+                        </>
+                    ) : (
+                        <>
+                            <Link to="/login" className="login-btn">Login</Link>
+                            <Link to="/signup" className="signup-btn">Sign Up</Link>
+                        </>
+                    )}
+                </div>
             </div>
         </header>
     );

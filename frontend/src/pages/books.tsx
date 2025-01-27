@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import RentalModal from '../components/RentalModal';
 import '../assets/styles/pages/books.css';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface Book {
     id: string;
@@ -15,6 +18,9 @@ const BooksPage: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchBooks = async () => {
@@ -39,6 +45,46 @@ const BooksPage: React.FC = () => {
     console.log('Loading state:', loading);
     console.log('Error state:', error);
 
+    const handleRentClick = (book: Book) => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+        setSelectedBook(book);
+    };
+
+    const handleRentConfirm = async (days: number) => {
+        if (!selectedBook) return;
+        
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const response = await axios.post(
+                'https://fluffy-doodle-7xjxggv9p772p7jr-5000.app.github.dev/api/rentals',
+                {
+                    book_id: selectedBook.id,
+                    duration_days: days
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (response.status === 201) {
+                alert('Book rented successfully!');
+            }
+        } catch (err) {
+            alert('Failed to rent book. Please try again.');
+        }
+        setSelectedBook(null);
+    };
+
     if (loading) return <div className="loading">Loading books...</div>;
     if (error) return <div className="error">{error}</div>;
     if (!books || books.length === 0) return <div>No books found</div>;
@@ -58,11 +104,24 @@ const BooksPage: React.FC = () => {
                                 <span className="rating">⭐ {book.rating}</span>
                                 <span className="price">${book.price}</span>
                             </div>
-                            <button className="rent-btn">Rent Now</button>
+                            <button 
+                                className="rent-btn"
+                                onClick={() => handleRentClick(book)}
+                            >
+                                Rent Now
+                            </button>
                         </div>
                     </div>
                 ))}
             </section>
+
+            {selectedBook && (
+                <RentalModal
+                    book={selectedBook}
+                    onClose={() => setSelectedBook(null)}
+                    onConfirm={handleRentConfirm}
+                />
+            )}
         </div>
     );
 };
