@@ -7,7 +7,8 @@ import HomePage from './pages/home';
 import ContactPage from './pages/contact';
 import AboutPage from './pages/About';
 import BooksPage from './pages/books';
-import LibraryPage from './pages/library';
+import LibraryPage from './pages/Library';
+import BookDetails from './pages/BookDetails';
 import './assets/styles/pages/login.css';
 import './assets/styles/pages/signup.css';
 import { AuthProvider } from './context/AuthContext';
@@ -28,6 +29,7 @@ const App: React.FC = () => {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/books" element={<BooksPage />} />
               <Route path="/library" element={<LibraryPage />} />
+              <Route path="/books/:bookId" element={<BookDetails />} />
             </Routes>
           </main>
           <Footer />

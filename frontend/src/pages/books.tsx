@@ -93,8 +93,11 @@ const BooksPage: React.FC = () => {
     return (
         <div className="books-container">
             <section className="books-grid">
-                {Array.isArray(books) && books.map(book => ( // Add Array check
-                    <div key={book.id} className="book-card">
+                {Array.isArray(books) && books.map(book => (
+                    <div 
+                        className="book-card" 
+                        onClick={() => navigate(`/books/${book.id}`)}
+                    >
                         <div className="book-cover">
                             <img src={book.cover_image} alt={book.title} />
                         </div>
@@ -103,7 +106,7 @@ const BooksPage: React.FC = () => {
                             <p className="author">{book.author}</p>
                             <div className="book-meta">
                                 <span className="rating">⭐ {book.rating}</span>
-                                <span className="price">Purchase Price: ${book.price}</span>
+                                <span className="price">Price: ${book.price}</span>
                             </div>
                             <button 
                                 className="rent-btn"

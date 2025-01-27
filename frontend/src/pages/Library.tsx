@@ -4,13 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../assets/styles/pages/library.css';
 
+interface Book {
+    id: string;
+    title: string;
+    author: string;
+    cover_image: string;
+}
+
 interface Rental {
     id: string;
-    book: {
-        title: string;
-        author: string;
-        cover_image: string;
-    };
+    book: Book;
     rental_date: string;
     return_date: string;
     remaining_days: number;
@@ -60,7 +63,11 @@ const LibraryPage: React.FC = () => {
             <h1>My Library</h1>
             <div className="rentals-grid">
                 {rentals.map(rental => (
-                    <div key={rental.id} className="rental-card">
+                    <div 
+                        key={rental.id} 
+                        className="rental-card" 
+                        onClick={() => navigate(`/books/${rental.book.id}`, { state: { fromLibrary: true } })}
+                    >
                         <div className="book-cover">
                             <img src={rental.book.cover_image} alt={rental.book.title} />
                         </div>

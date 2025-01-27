@@ -1,0 +1,91 @@
+.book-details-container {
+    padding: 80px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.book-details-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 40px;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.book-cover img {
+    width: 100%;
+    border-radius: 5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.book-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.book-info h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.book-info h2 {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+    font-weight: normal;
+    text-align: left;
+    align-self: flex-start;
+    width: 100%;
+}
+
+.book-meta {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.price {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2c5282;
+}
+
+.rating {
+    color: #666;
+}
+
+.description {
+    line-height: 1.6;
+    color: #444;
+    margin-bottom: 30px;
+}
+
+.rent-button, .read-button {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.rent-button {
+    background: #2c5282;
+    color: white;
+}
+
+.read-button {
+    background: #48bb78;
+    color: white;
+}
+
+.rent-button:hover {
+    background: #2a4365;
+}
+
+.read-button:hover {
+    background: #38a169;
+}
