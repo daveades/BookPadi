@@ -10,12 +10,7 @@ def create_app():
     app = Flask(__name__)
     CORS(app, resources={
         r"/api/*": {
-            "origins": [
-                "https://fluffy-doodle-7xjxggv9p772p7jr-3000.app.github.dev",
-                "http://localhost:3000",
-                "https://bookpadi.vercel.app"
-
-            ],
+            "origins": ["https://book-padi.vercel.app"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
         }
