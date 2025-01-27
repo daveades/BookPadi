@@ -36,8 +36,7 @@ const Header: React.FC = () => {
 
                 <div className="auth-buttons">
                     <Link to="/login" className="login-btn">Login</Link>
-                    <Link to="/signup" className="signup-btn">Sign Up</Link>
-                </div>
+                    <Link to="/signup" className="signup-btn">Sign Up</Link>                </div>
             </div>
         </header>
     );
