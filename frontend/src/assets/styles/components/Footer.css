@@ -10,6 +10,8 @@ footer {
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
     font-family: var(--font-primary, 'Roboto', sans-serif);
     z-index: 100;
+    opacity: 1;
+    transition: opacity 0.4s ease;
 }
 
 footer p {

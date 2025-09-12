@@ -21,7 +21,7 @@ const Footer: React.FC = () => {
   }, []);
 
   return (
-    <footer style={{ display: visible ? 'block' : 'none' }}>
+    <footer style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none' }}>
       <p>&copy; 2024 BookPadi. All rights reserved.</p>
     </footer>
   );
