@@ -3,7 +3,7 @@ import '../../assets/styles/components/Footer.css';
 
 const Footer: React.FC = () => {
   return (
-  <footer>
+    <footer>
       <p>&copy; 2024 BookPadi. All rights reserved.</p>
     </footer>
   );
