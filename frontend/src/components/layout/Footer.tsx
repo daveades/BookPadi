@@ -1,11 +1,10 @@
 import React from 'react';
+import '../../assets/styles/components/Footer.css';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-primary p-4 mt-auto">
-      <div>
-        <p>&copy; 2024 BookPadi. All rights reserved.</p>
-      </div>
+  <footer>
+      <p>&copy; 2024 BookPadi. All rights reserved.</p>
     </footer>
   );
 };
