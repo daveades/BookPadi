@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LoadingScreen from '../components/LoadingScreen';
 import axios from 'axios';
 import RentalModal from '../components/RentalModal';
 import '../assets/styles/pages/books.css';
@@ -86,7 +87,7 @@ const BooksPage: React.FC = () => {
         setSelectedBook(null);
     };
 
-    if (loading) return <div className="loading">Loading books...</div>;
+    if (loading) return <LoadingScreen />;
     if (error) return <div className="error">{error}</div>;
     if (!books || books.length === 0) return <div>No books found</div>;
 
