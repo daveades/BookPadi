@@ -56,7 +56,7 @@ const BooksPage: React.FC = () => {
 
     const handleRentConfirm = async (days: number) => {
         if (!selectedBook) return;
-        
+
         try {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -95,8 +95,8 @@ const BooksPage: React.FC = () => {
         <div className="books-container">
             <section className="books-grid">
                 {Array.isArray(books) && books.map(book => (
-                    <div 
-                        className="book-card" 
+                    <div
+                        className="book-card"
                         onClick={() => navigate(`/books/${book.id}`)}
                     >
                         <div className="book-cover">
@@ -109,7 +109,7 @@ const BooksPage: React.FC = () => {
                                 <span className="rating">⭐ {book.rating}</span>
                                 <span className="price">Price: ${book.price}</span>
                             </div>
-                            <button 
+                            <button
                                 className="rent-btn"
                                 onClick={() => handleRentClick(book)}
                             >
