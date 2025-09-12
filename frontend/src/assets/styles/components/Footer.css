@@ -3,11 +3,11 @@ footer {
     left: 0;
     bottom: 0;
     width: 100%;
-    background: var(--color-primary, #007bff);
+    background: #174ea6;
     color: #fff;
     text-align: center;
     padding: 1rem 0;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
     font-family: var(--font-primary, 'Roboto', sans-serif);
     z-index: 100;
 }
