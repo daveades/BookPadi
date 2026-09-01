@@ -48,31 +48,42 @@ I started with how to organise the data that describes a book, since it is the c
 
 ### Book
 
-Primary entity of the system.
+Primary database entity.
 
-Its attributes are:
-- id
-- title
-- description
-- publication year
-- publisher
-- edition
-- cover reference
+Its columns are:
+
+| Column | Type | Constraints |
+| --- | --- | --- |
+| `id` | `bigint` | primary key, generated always as identity |
+| `title` | `text` | not null |
+| `description` | `text` | nullable |
+| `language` | `text` | not null, a 2 or 3 character code |
+| `pub_year` | `int` | nullable, between 1 and 2100 |
+| `publisher` | `text` | nullable |
+| `edition` | `text` | nullable |
+| `cover_ref` | `text` | nullable |
+| `license_id` | `bigint` | not null, references `license (id)` |
 
 ### Author
 
 I modeled an author as a separate entity because an author is a distinct piece of data that can be associated with multiple books and a book can have multiple authors
 
 described by:
-- id
-- name
+
+| Column | Type | Constraints |
+| --- | --- | --- |
+| `id` | `bigint` | primary key, generated always as identity |
+| `name` | `text` | not null, unique |
 
 ### Topic
 A topic is the subject area that a book can belong to.
 
 contains:
-- id
-- name
+
+| Column | Type | Constraints |
+| --- | --- | --- |
+| `id` | `bigint` | primary key, generated always as identity |
+| `name` | `text` | not null, unique |
 
 many-to-many relationship with books.
 
@@ -80,15 +91,19 @@ many-to-many relationship with books.
 ### License
 Represents the license under which a book is made available.
 
-- id
-- name
-- license_url
+| Column | Type | Constraints |
+| --- | --- | --- |
+| `id` | `bigint` | primary key, generated always as identity |
+| `name` | `text` | not null, unique |
+| `license_url` | `text` | not null |
 
 ### Format
 Represents the available formats of a book
 
-- id
-- name
+| Column | Type | Constraints |
+| --- | --- | --- |
+| `id` | `bigint` | primary key, generated always as identity |
+| `name` | `text` | not null, unique |
 
 ### Location
 Where a book can be accessed.
@@ -96,11 +111,19 @@ Where a book can be accessed.
 I first considered storing the location as its own entity with a one-to-many relationship to books but I realized  that more information will be needed to know what format is stored in that location. Availability depends on the specific format, so storing the location properly means I have to relate three things: the book, the format and the location such that a row contains information to say "this book, in this format, is here".
 
 described by:
-- location
-- book id
-- format id
+
+| Column | Type | Constraints |
+| --- | --- | --- |
+| `book_id` | `bigint` | primary key with `format_id`, references `books (id)` |
+| `format_id` | `bigint` | primary key with `book_id`, references `format (id)` |
+| `location` | `text` | not null |
 
 This entity doubles as the junction between books and formats carrying the location of the book in each format
+
+### Junction tables
+
+`book_author` and `book_topic` are the remaining many-to-many links. Each on has two `bigint` columns both not null, both foreign keys, they both also form a composite PK: `book_author (book_id, author_id)` and `book_topic (book_id, topic_id)`.
+
 ## Defining the relationships
 I defined the relationship between the entities by asking two questions:
 1. For one record of this entity, what is the minimum number of records of the other entity it must be associated with? to determine whether the relationship is optional
