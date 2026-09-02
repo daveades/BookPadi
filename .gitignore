@@ -2,3 +2,5 @@ __pycache__/
 .venv/
 venv/
 .env
+bookpadi.egg-info/
+.gitignore
