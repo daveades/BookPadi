@@ -1,4 +1,6 @@
-from flask import Flask, abort, request
+import os
+
+from flask import Flask, abort, request, send_from_directory
 
 from bookpadi import books, db
 
@@ -24,3 +26,25 @@ def details(book_id):
     if book is None:
         abort(404)
     return book
+
+
+@app.get("/books/<int:book_id>/file")
+def read(book_id):
+    with db.connect() as conn:
+        location = books.get_book_file(conn, book_id, request.args.get("format"))
+    if location is None:
+        abort(404)
+    return send_from_directory(
+        os.environ["MEDIA_DIR"],
+        location,
+        as_attachment=request.args.get("download") == "1",
+    )
+
+
+@app.get("/books/<int:book_id>/cover")
+def cover(book_id):
+    with db.connect() as conn:
+        location = books.get_book_cover(conn, book_id)
+    if location is None:
+        abort(404)
+    return send_from_directory(os.environ["MEDIA_DIR"], location)
