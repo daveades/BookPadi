@@ -70,3 +70,49 @@ def get_book_cover(conn, book_id):
         cur.execute("select cover_ref from books where id = %s", (book_id,))
         row = cur.fetchone()
         return row and row["cover_ref"]
+
+
+def _reuse_or_create(cur, table, name):
+    cur.execute(f"insert into {table} (name) values (%s) on conflict (lower(name)) do nothing", (name,))
+    cur.execute(f"select id from {table} where lower(name) = lower(%s)", (name,))
+    return cur.fetchone()["id"]
+
+
+def create_book(conn, book):
+    for field in ("authors", "topics", "formats"):
+        if not book[field]:
+            raise ValueError(f"book has no {field}")
+
+    with conn.transaction(), conn.cursor() as cur:
+        cur.execute(
+            "insert into license (name, license_url) values (%s, %s) on conflict (lower(name)) do nothing",
+            (book["license"]["name"], book["license"]["url"]),
+        )
+        cur.execute("select id from license where lower(name) = lower(%s)", (book["license"]["name"],))
+        license_id = cur.fetchone()["id"]
+
+        cur.execute("""
+            insert into books (title, description, language, pub_year, publisher, edition, cover_ref, license_id)
+            values (%s, %s, %s, %s, %s, %s, %s, %s)
+            returning id
+        """, (book["title"], book.get("description"), book["language"], book.get("pub_year"),
+              book.get("publisher"), book.get("edition"), book.get("cover_ref"), license_id))
+        book_id = cur.fetchone()["id"]
+
+        for name in book["authors"]:
+            author_id = _reuse_or_create(cur, "author", name)
+            cur.execute("insert into book_author (book_id, author_id) values (%s, %s)", (book_id, author_id))
+
+        for name in book["topics"]:
+            topic_id = _reuse_or_create(cur, "topic", name)
+            cur.execute("insert into book_topic (book_id, topic_id) values (%s, %s)", (book_id, topic_id))
+
+        for name, location in book["formats"].items():
+            cur.execute("select id from format where name = %s", (name,))
+            row = cur.fetchone()
+            if row is None:
+                raise ValueError(f"unknown format: {name}")
+            cur.execute("insert into book_format (book_id, format_id, location) values (%s, %s, %s)",
+                        (book_id, row["id"], location))
+
+    return book_id
