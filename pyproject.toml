@@ -7,7 +7,10 @@ name = "bookpadi"
 version = "0.1.0"
 description = "A searchable library of openly licensed books"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "flask>=3",
+    "psycopg[binary]>=3",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
