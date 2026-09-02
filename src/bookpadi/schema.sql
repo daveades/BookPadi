@@ -1,6 +1,4 @@
 -- BookPadi MVP schema.
--- Recreates the database from scratch:
--- psql -d bookpadi -f src/bookpadi/schema.sql
 
 drop table if exists book_format cascade;
 drop table if exists book_topic cascade;
@@ -13,19 +11,25 @@ drop table if exists format cascade;
 
 create table license (
     id          bigint generated always as identity primary key,
-    name        text not null unique,
+    name        text not null,
     license_url text not null
 );
 
+create unique index on license (lower(name));
+
 create table author (
     id   bigint generated always as identity primary key,
-    name text not null unique
+    name text not null
 );
+
+create unique index on author (lower(name));
 
 create table topic (
     id   bigint generated always as identity primary key,
-    name text not null unique
+    name text not null
 );
+
+create unique index on topic (lower(name));
 
 create table format (
     id   bigint generated always as identity primary key,
@@ -36,7 +40,8 @@ create table books (
     id          bigint generated always as identity primary key,
     title       text not null,
     description text,
-    language    text not null check (char_length(language) between 2 and 3),
+    language    text not null check (language = lower(language)
+                                      and char_length(language) between 2 and 3),
     pub_year    int check (pub_year between 1 and 2100),
     publisher   text,
     edition     text,
@@ -71,3 +76,5 @@ create table book_format (
 );
 
 create index on book_format (format_id);
+
+insert into format (name) values ('pdf'), ('epub'), ('html');
