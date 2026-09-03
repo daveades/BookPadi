@@ -1,0 +1,165 @@
+:root {
+  --paper: #fdfdfc;
+  --ink: #17171b;
+  --muted: #6c6c74;
+  --rule: #e3e1dc;
+  --sans: "Nunito Sans", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-optical-sizing: auto;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem 5rem;
+}
+
+.masthead {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-align: center;
+  margin: 0 0 2.5rem;
+}
+
+.status {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: 0 0 1.25rem;
+}
+
+.books {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.book {
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--rule);
+}
+
+.book:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.book__title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.book__authors {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: 0.3rem 0 0;
+}
+
+.modes {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 0 0 2.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.mode {
+  padding: 0 0 0.75rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.mode:hover {
+  color: var(--ink);
+}
+
+.mode--on {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--ink);
+}
+
+.ask {
+  margin: 0 0 2.5rem;
+}
+
+.ask__box {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  padding: 0.7rem 0.7rem 0.7rem 1.1rem;
+  border: 1px solid var(--rule);
+  border-radius: 1.5rem;
+  background: #fff;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.ask__box:focus-within {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(23, 23, 27, 0.07);
+}
+
+.ask__field {
+  flex: 1;
+  min-width: 0;
+  max-height: 40vh;
+  padding: 0.3rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: none;
+  overflow-y: auto;
+}
+
+.ask__field:focus {
+  outline: none;
+}
+
+.ask__field::placeholder {
+  color: #a9a9b0;
+}
+
+.ask__send {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  cursor: pointer;
+}
+
+.ask__send:disabled {
+  background: #e6e4df;
+  color: var(--muted);
+  cursor: default;
+}
