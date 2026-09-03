@@ -1,7 +1,10 @@
+READABLE_FORMATS = ("html", "pdf")
+
+
 def list_books(conn):
     with conn.cursor() as cur:
         cur.execute("""
-            select b.id, b.title, array_agg(a.name order by a.name) as authors
+            select b.id, b.title, b.cover_ref, array_agg(a.name order by a.name) as authors
             from books b
             join book_author ba on ba.book_id = b.id
             join author a on a.id = ba.author_id
@@ -25,11 +28,16 @@ def get_book(conn, book_id):
                      where bt.book_id = b.id) as topics,
                    (select array_agg(f.name order by f.name)
                       from book_format bf join format f on f.id = bf.format_id
-                     where bf.book_id = b.id) as formats
+                     where bf.book_id = b.id) as formats,
+                   (select f.name
+                      from book_format bf join format f on f.id = bf.format_id
+                     where bf.book_id = b.id and f.name = any(%s)
+                     order by f.priority
+                     limit 1) as read_format
             from books b
             join license l on l.id = b.license_id
             where b.id = %s
-        """, (book_id,))
+        """, (list(READABLE_FORMATS), book_id))
         return cur.fetchone()
 
 
@@ -38,7 +46,7 @@ def search_books(conn, q):
         return []
     with conn.cursor() as cur:
         cur.execute("""
-            select b.id, b.title, array_agg(a.name order by a.name) as authors
+            select b.id, b.title, b.cover_ref, array_agg(a.name order by a.name) as authors
             from books b
             join book_author ba on ba.book_id = b.id
             join author a on a.id = ba.author_id
@@ -57,7 +65,7 @@ def search_books(conn, q):
 def get_book_file(conn, book_id):
     with conn.cursor() as cur:
         cur.execute("""
-            select bf.location, f.name as format
+            select bf.location
             from book_format bf
             join format f on f.id = bf.format_id
             where bf.book_id = %s
@@ -65,7 +73,7 @@ def get_book_file(conn, book_id):
             limit 1
         """, (book_id,))
         row = cur.fetchone()
-        return row
+        return row and row["location"]
 
 
 def get_book_cover(conn, book_id):

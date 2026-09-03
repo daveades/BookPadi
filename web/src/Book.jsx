@@ -73,28 +73,42 @@ export default function Book({ bookId, onRead, onBack }) {
           <h2 className="detail__title">{book.title}</h2>
           <p className="detail__authors">{book.authors.join(", ")}</p>
           <p className="detail__actions">
-            <button type="button" className="text-btn text-btn--strong" onClick={onRead}>
-              Read
-            </button>
+            {book.read_format ? (
+              <button type="button" className="btn" onClick={onRead}>
+                Read
+              </button>
+            ) : (
+              <>
+                <span className="detail__note">
+                  This book is available in EPUB format.
+                </span>
+                <a className="btn" href={"/books/" + bookId + "/read"}>
+                  Download EPUB
+                </a>
+              </>
+            )}
           </p>
         </div>
       </div>
 
       {book.description && <p className="detail__blurb">{book.description}</p>}
 
-      {facts.length > 0 && <p className="detail__meta">{facts.join(", ")}</p>}
+      {facts.length > 0 && (
+        <p className="detail__row">
+          <span className="detail__label">Publication:</span> {facts.join(", ")}
+        </p>
+      )}
 
       {book.topics && book.topics.length > 0 && (
-        <p className="detail__meta">{book.topics.join(", ")}</p>
+        <p className="detail__row">
+          <span className="detail__label">Topics:</span> {book.topics.join(", ")}
+        </p>
       )}
 
-      <p className="detail__meta">
+      <p className="detail__row">
+        <span className="detail__label">License:</span>{" "}
         <a href={book.license_url}>{book.license_name}</a>
       </p>
-
-      {book.formats && book.formats.length > 0 && (
-        <p className="detail__meta">{book.formats.join(", ")}</p>
-      )}
     </article>
   );
 }

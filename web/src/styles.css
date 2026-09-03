@@ -47,6 +47,12 @@ body {
   margin: 0 0 1.25rem;
 }
 
+.list-head {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+
 .books {
   list-style: none;
   margin: 0;
@@ -62,14 +68,11 @@ body {
   border-bottom: 1px solid var(--rule);
 }
 
-.book__title {
-  font-size: 1.0625rem;
-  font-weight: 600;
-  line-height: 1.35;
-  margin: 0;
-}
-
 .book__select {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  width: 100%;
   padding: 0;
   border: 0;
   background: none;
@@ -79,14 +82,34 @@ body {
   cursor: pointer;
 }
 
-.book__select:hover {
+.book__cover {
+  flex: none;
+  width: 3.5rem;
+  height: auto;
+  vertical-align: top;
+}
+
+.book__text {
+  display: block;
+  min-width: 0;
+}
+
+.book__title {
+  display: block;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.book__select:hover .book__title {
   text-decoration: underline;
 }
 
 .book__authors {
+  display: block;
   font-size: 0.875rem;
   color: var(--muted);
-  margin: 0.3rem 0 0;
+  margin-top: 0.3rem;
 }
 
 .modes {
@@ -203,6 +226,21 @@ body {
   font-weight: 600;
 }
 
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.75rem;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
 .detail__nav {
   margin: 0 0 2rem;
 }
@@ -238,18 +276,30 @@ body {
   margin: 1rem 0 0;
 }
 
+.detail__note {
+  display: block;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+
 .detail__blurb {
   margin: 0 0 1.25rem;
 }
 
-.detail__meta {
+.detail__row {
   font-size: 0.875rem;
   color: var(--muted);
   margin: 0 0 0.4rem;
 }
 
-.detail__meta a {
+.detail__row a {
   color: inherit;
+}
+
+.detail__label {
+  color: var(--ink);
+  font-weight: 600;
+  margin-right: 0.5rem;
 }
 
 .reader {

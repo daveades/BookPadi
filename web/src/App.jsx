@@ -103,10 +103,13 @@ export default function App() {
 
       {view === "list" && !waiting && !failed && books !== null && books.length > 0 && (
         <>
-          <p className="status">
-            {books.length} {books.length === 1 ? "book" : "books"}
-            {mode === "search" ? ` for ${query}` : ""}
-          </p>
+          {mode === "browse" ? (
+            <h2 className="list-head">Recently added</h2>
+          ) : (
+            <p className="status">
+              {books.length} {books.length === 1 ? "book" : "books"} for {query}
+            </p>
+          )}
           <BookList books={books} onSelect={openBook} />
         </>
       )}

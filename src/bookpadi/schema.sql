@@ -80,6 +80,6 @@ create index on book_format (format_id);
 
 insert into format (name, priority) 
 values 
-    ('epub', 2),
-    ('html', 1), 
-    ('pdf', 3);
+    ('html', 1),
+    ('pdf', 2), 
+    ('epub', 3);
