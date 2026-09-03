@@ -36,11 +36,7 @@ def read(book_id):
         location = books.get_book_file(conn, book_id, request.args.get("format"))
     if location is None:
         abort(404)
-    return send_from_directory(
-        os.environ["MEDIA_DIR"],
-        location,
-        as_attachment=request.args.get("download") == "1",
-    )
+    return send_from_directory(os.environ["MEDIA_DIR"], location)
 
 
 @app.get("/books/<int:book_id>/cover")
