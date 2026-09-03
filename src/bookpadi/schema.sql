@@ -77,4 +77,4 @@ create table book_format (
 
 create index on book_format (format_id);
 
-insert into format (name) values ('pdf'), ('epub'), ('html');
+insert into format (name) values ('epub'), ('html');
