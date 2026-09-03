@@ -30,14 +30,39 @@ def details(book_id):
     return book
 
 
-@app.get("/books/<int:book_id>/file")
+@app.get("/books/<int:book_id>/read")
 def read(book_id):
     with db.connect() as conn:
-        location = books.get_book_file(conn, book_id, request.args.get("format"))
-    if location is None:
-        abort(404)
-    return send_from_directory(os.environ["MEDIA_DIR"], location)
+        document = books.get_book_file(conn, book_id)
 
+    if document is None:
+        abort(404)
+
+    location = document["location"]
+    format_name = document["format"]
+
+    if format_name == "html":
+        return send_from_directory(
+            os.environ["MEDIA_DIR"],
+            location,
+            mimetype="text/html"
+        )
+
+    if format_name == "epub":
+        return send_from_directory(
+            os.environ["MEDIA_DIR"],
+            location,
+            mimetype="application/epub+zip"
+        )
+
+    if format_name == "pdf":
+        return send_from_directory(
+            os.environ["MEDIA_DIR"],
+            location,
+            mimetype="application/pdf"
+        )
+
+    abort(404)
 
 @app.get("/books/<int:book_id>/cover")
 def cover(book_id):

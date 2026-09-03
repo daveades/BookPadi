@@ -54,15 +54,18 @@ def search_books(conn, q):
         return cur.fetchall()
 
 
-def get_book_file(conn, book_id, format):
+def get_book_file(conn, book_id):
     with conn.cursor() as cur:
         cur.execute("""
-            select bf.location
-            from book_format bf join format f on f.id = bf.format_id
-            where bf.book_id = %s and f.name = %s
-        """, (book_id, format))
+            select bf.location, f.name as format
+            from book_format bf
+            join format f on f.id = bf.format_id
+            where bf.book_id = %s
+            order by f.priority
+            limit 1
+        """, (book_id,))
         row = cur.fetchone()
-        return row and row["location"]
+        return row
 
 
 def get_book_cover(conn, book_id):

@@ -33,7 +33,8 @@ create unique index on topic (lower(name));
 
 create table format (
     id   bigint generated always as identity primary key,
-    name text not null unique
+    name text not null unique,
+    priority int not null
 );
 
 create table books (
@@ -77,4 +78,8 @@ create table book_format (
 
 create index on book_format (format_id);
 
-insert into format (name) values ('epub'), ('html');
+insert into format (name, priority) 
+values 
+    ('epub', 2),
+    ('html', 1), 
+    ('pdf', 3);
