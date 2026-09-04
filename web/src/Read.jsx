@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import ePub from "epubjs";
+import PdfView from "./PdfView";
 
 export default function Read({ bookId, epub, readFormat, onBack }) {
   const epubHost = useRef(null);
@@ -74,13 +75,12 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
   }, [bookId, epub]);
 
   useEffect(() => {
-    if (epub) return;
+    if (epub || readFormat !== "html") return;
     let saveTimer;
     let interval;
     const frame = frameRef.current;
     let saved = null;
     let last = null;
-    const isHtml = readFormat === "html";
 
     function doc() {
       return frame && frame.contentDocument
@@ -96,7 +96,6 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
       const win = frame.contentWindow;
       const top = win.scrollY || win.pageYOffset || 0;
       if (top <= 0) return "top:0";
-      if (!isHtml) return String(top || 0);
       const sections = Array.from(documentEl.querySelectorAll("h1[id], h2[id], h3[id]"));
       let section = null;
       for (const el of sections) {
@@ -114,7 +113,7 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
       fetch("/books/" + bookId + "/progress", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ position: String(pos), format: isHtml ? "html" : "pdf" }),
+        body: JSON.stringify({ position: String(pos), format: "html" }),
       }).catch(() => {});
     }
 
@@ -135,7 +134,7 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
         const win = frame.contentWindow;
         const documentEl = doc();
         if (!documentEl) return;
-        if (isHtml && typeof saved === "string" && saved.includes(":")) {
+        if (typeof saved === "string" && saved.includes(":")) {
           const i = saved.indexOf(":");
           const section = documentEl.getElementById(saved.slice(0, i));
           if (section) {
@@ -144,8 +143,8 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
           }
         }
         win.scrollTo(0, Number(saved) || 0);
-      } catch (err) {
-        /* not readable (e.g. PDF viewer) */
+      } catch {
+        /* no-op */
       }
     }
 
@@ -214,6 +213,10 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
         </div>
       </div>
     );
+  }
+
+  if (readFormat === "pdf") {
+    return <PdfView bookId={bookId} onBack={onBack} />;
   }
 
   return (
