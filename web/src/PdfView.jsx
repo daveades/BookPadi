@@ -38,8 +38,8 @@ export default function PdfView({ bookId, onBack }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       await pg.render({ canvasContext: ctx, viewport }).promise;
       pd.rendered = scaleRef.current;
-    } catch {
-      /* page render failed */
+    } catch (err) {
+      console.error(`Page ${num} render error:`, err);
     } finally {
       pd.rendering = false;
     }
@@ -53,9 +53,10 @@ export default function PdfView({ bookId, onBack }) {
         scrollRef.current.scrollTop = pd.el.offsetTop;
         setPage(pg);
         currentRef.current = pg;
+        renderPage(pg);
       }
     },
-    [],
+    [renderPage],
   );
 
   useEffect(() => {
@@ -95,7 +96,9 @@ export default function PdfView({ bookId, onBack }) {
 
     async function open() {
       try {
-        const res = await fetch("/books/" + bookId + "/read");
+        const res = await fetch("/books/" + bookId + "/read?format=pdf", {
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error(res.status);
         const buf = await res.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -113,8 +116,9 @@ export default function PdfView({ bookId, onBack }) {
 
         currentRef.current = 1;
 
-        const cWidth = hostRef.current.clientWidth - 40;
-        scaleRef.current = Math.min(PAGE_WIDTH, cWidth) / PAGE_WIDTH;
+        const cWidth =
+          (hostRef.current?.clientWidth || scrollRef.current?.clientWidth || window.innerWidth) - 40;
+        scaleRef.current = Math.min(PAGE_WIDTH, Math.max(280, cWidth)) / PAGE_WIDTH;
 
         const obs = new IntersectionObserver(
           (entries) => {
@@ -127,9 +131,14 @@ export default function PdfView({ bookId, onBack }) {
         );
         observerRef.current = obs;
 
+        // Render first page right away
+        renderPage(1);
+
         const scrollEl = scrollRef.current;
-        scrollEl.addEventListener("scroll", onScroll, { passive: true });
-        scrollEl.addEventListener("scroll", onScrollSave, { passive: true });
+        if (scrollEl) {
+          scrollEl.addEventListener("scroll", onScroll, { passive: true });
+          scrollEl.addEventListener("scroll", onScrollSave, { passive: true });
+        }
 
         intervalTimer = setInterval(flush, 2000);
 
@@ -140,11 +149,15 @@ export default function PdfView({ bookId, onBack }) {
             if (data && data.position != null) {
               const pg = Number(data.position);
               if (pg >= 1 && pg <= pdf.numPages)
-                restoreTimer = setTimeout(() => goTo(pg), 100);
+                restoreTimer = setTimeout(() => {
+                  goTo(pg);
+                  renderPage(pg);
+                }, 100);
             }
           })
           .catch(() => {});
-      } catch {
+      } catch (err) {
+        console.error("Failed to open PDF:", err);
         if (!stopped) setFailed(true);
       }
     }
@@ -171,7 +184,7 @@ export default function PdfView({ bookId, onBack }) {
 
   if (failed) {
     return (
-      <div className="reader">
+      <div ref={hostRef} className="reader">
         <p className="reader__bar">
           <button type="button" className="text-btn" onClick={onBack}>
             Back
@@ -185,7 +198,7 @@ export default function PdfView({ bookId, onBack }) {
   }
 
   return (
-    <div className="reader">
+    <div ref={hostRef} className="reader">
       <p className="reader__bar">
         <button type="button" className="text-btn" onClick={onBack}>
           Back
@@ -217,7 +230,15 @@ export default function PdfView({ bookId, onBack }) {
         {pagesRef.current.map((pd) => (
           <div
             key={pd.num}
-            ref={(el) => { pd.el = el; }}
+            ref={(el) => {
+              if (pd.el && observerRef.current && pd.el !== el) {
+                observerRef.current.unobserve(pd.el);
+              }
+              pd.el = el;
+              if (el && observerRef.current) {
+                observerRef.current.observe(el);
+              }
+            }}
             data-page={pd.num}
             className="reader__pdf-page"
           >

@@ -28,7 +28,9 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
 
     async function openBlock() {
       try {
-        const res = await fetch("/books/" + bookId + "/read?format=epub");
+        const res = await fetch("/books/" + bookId + "/read?format=epub", {
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error(res.status);
         const buf = await res.arrayBuffer();
         const book = ePub(buf);
