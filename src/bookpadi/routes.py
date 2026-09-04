@@ -110,6 +110,16 @@ def me():
     return {"user": {"id": user["id"], "email": user["email"]}}
 
 
+@app.get("/books/history")
+@app.get("/library")
+def library_history():
+    user_id = current_user_id()
+    if user_id is None:
+        return {"error": "not signed in"}, 401
+    with db.connect() as conn:
+        return progress.get_user_history(conn, user_id)
+
+
 @app.get("/books/<int:book_id>/progress")
 def get_progress(book_id):
     user_id = current_user_id()

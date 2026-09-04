@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import Auth from "./Auth";
 import Book from "./Book";
 import BookList from "./BookList";
+import ContinueReading from "./ContinueReading";
+import Library from "./Library";
 import Read from "./Read";
 import Search from "./Search";
 
@@ -17,6 +19,9 @@ export default function App() {
   const [books, setBooks] = useState(null);
   const [failed, setFailed] = useState(false);
   const [bookSession, setBookSession] = useState(0);
+  const [history, setHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyFailed, setHistoryFailed] = useState(false);
 
   useEffect(() => {
     fetch("/auth/me")
@@ -25,6 +30,19 @@ export default function App() {
       .catch(() => setUser(null))
       .finally(() => setChecking(false));
   }, []);
+
+  function loadHistory() {
+    setHistoryLoading(true);
+    setHistoryFailed(false);
+    fetch("/books/history")
+      .then((response) => {
+        if (!response.ok) throw new Error(response.status);
+        return response.json();
+      })
+      .then(setHistory)
+      .catch(() => setHistoryFailed(true))
+      .finally(() => setHistoryLoading(false));
+  }
 
   function load(path) {
     setBooks(null);
@@ -37,6 +55,14 @@ export default function App() {
       .then(setBooks)
       .catch(() => setFailed(true));
   }
+
+  useEffect(() => {
+    if (user) {
+      loadHistory();
+    } else {
+      setHistory(null);
+    }
+  }, [user, bookSession]);
 
   useEffect(() => {
     if (mode === "browse" && user) load("/books");
@@ -53,6 +79,7 @@ export default function App() {
     setBookId(null);
     setQuery("");
     if (next === "search") setBooks(null);
+    if (next === "library") loadHistory();
   }
 
   function openBook(id) {
@@ -60,9 +87,21 @@ export default function App() {
     setView("book");
   }
 
+  function resumeBook(book) {
+    setBookId(book.id);
+    const isEpub =
+      book.progress_format === "epub" ||
+      (book.formats && book.formats.includes("epub") && !book.progress_format);
+    const format = book.progress_format || (isEpub ? "epub" : "pdf");
+    setEpub(isEpub);
+    setReadFormat(format);
+    setView("read");
+  }
+
   function signOut() {
     fetch("/auth/logout", { method: "POST" });
     setUser(null);
+    setHistory(null);
     setView("list");
     setBookId(null);
   }
@@ -116,6 +155,13 @@ export default function App() {
             Browse
           </button>
           <button
+            className={mode === "library" ? "mode mode--on" : "mode"}
+            onClick={() => show("library")}
+            aria-pressed={mode === "library"}
+          >
+            My Library
+          </button>
+          <button
             className={mode === "search" ? "mode mode--on" : "mode"}
             onClick={() => show("search")}
             aria-pressed={mode === "search"}
@@ -123,6 +169,17 @@ export default function App() {
             Search
           </button>
         </nav>
+      )}
+
+      {view === "list" && mode === "library" && (
+        <Library
+          history={history}
+          loading={historyLoading}
+          failed={historyFailed}
+          onResume={resumeBook}
+          onSelect={openBook}
+          onBrowse={() => show("browse")}
+        />
       )}
 
       {view === "list" && mode === "search" && <Search onSearch={search} />}
@@ -140,23 +197,31 @@ export default function App() {
         />
       )}
 
-      {view === "list" && waiting && (
+      {view === "list" && mode === "browse" && (
+        <ContinueReading
+          history={history}
+          onResume={resumeBook}
+          onSelect={openBook}
+        />
+      )}
+
+      {view === "list" && mode !== "library" && waiting && (
         <p className="status">Search for a title, an author or a topic.</p>
       )}
-      {view === "list" && !waiting && failed && (
+      {view === "list" && mode !== "library" && !waiting && failed && (
         <p className="status">The library did not answer.</p>
       )}
-      {view === "list" && !waiting && !failed && books === null && (
+      {view === "list" && mode !== "library" && !waiting && !failed && books === null && (
         <p className="status">Loading.</p>
       )}
 
-      {view === "list" && !waiting && !failed && books !== null && books.length === 0 && (
+      {view === "list" && mode !== "library" && !waiting && !failed && books !== null && books.length === 0 && (
         <p className="status">
           {mode === "search" ? `Nothing matches ${query}.` : "There are no books yet."}
         </p>
       )}
 
-      {view === "list" && !waiting && !failed && books !== null && books.length > 0 && (
+      {view === "list" && mode !== "library" && !waiting && !failed && books !== null && books.length > 0 && (
         <>
           {mode === "browse" ? (
             <h2 className="list-head">Recently added</h2>
@@ -171,3 +236,4 @@ export default function App() {
     </div>
   );
 }
+
