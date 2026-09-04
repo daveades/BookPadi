@@ -310,13 +310,41 @@ body {
 
 .reader__bar {
   flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin: 0;
   padding: 0.75rem 1.25rem;
   border-bottom: 1px solid var(--rule);
 }
 
+.reader__spacer {
+  flex: 1;
+}
+
+.reader__sep {
+  color: var(--muted);
+}
+
 .reader__frame {
   flex: 1;
+  min-height: 0;
   width: 100%;
   border: 0;
+}
+
+.reader__epub {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.reader__error {
+  position: absolute;
+  top: 1.25rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--muted);
+  margin: 0;
 }

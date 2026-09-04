@@ -62,16 +62,24 @@ def search_books(conn, q):
         return cur.fetchall()
 
 
-def get_book_file(conn, book_id):
+def get_book_file(conn, book_id, fmt=None):
     with conn.cursor() as cur:
-        cur.execute("""
-            select bf.location
-            from book_format bf
-            join format f on f.id = bf.format_id
-            where bf.book_id = %s
-            order by f.priority
-            limit 1
-        """, (book_id,))
+        if fmt:
+            cur.execute("""
+                select bf.location
+                from book_format bf
+                join format f on f.id = bf.format_id
+                where bf.book_id = %s and f.name = %s
+            """, (book_id, fmt))
+        else:
+            cur.execute("""
+                select bf.location
+                from book_format bf
+                join format f on f.id = bf.format_id
+                where bf.book_id = %s
+                order by f.priority
+                limit 1
+            """, (book_id,))
         row = cur.fetchone()
         return row and row["location"]
 

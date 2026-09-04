@@ -8,6 +8,7 @@ export default function App() {
   const [mode, setMode] = useState("browse");
   const [view, setView] = useState("list");
   const [bookId, setBookId] = useState(null);
+  const [epub, setEpub] = useState(false);
   const [query, setQuery] = useState("");
   const [books, setBooks] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -49,7 +50,13 @@ export default function App() {
   const waiting = mode === "search" && !query;
 
   if (view === "read") {
-    return <Read bookId={bookId} onBack={() => setView("book")} />;
+    return (
+      <Read
+        bookId={bookId}
+        epub={epub}
+        onBack={() => setView("book")}
+      />
+    );
   }
 
   return (
@@ -80,7 +87,10 @@ export default function App() {
       {view === "book" && (
         <Book
           bookId={bookId}
-          onRead={() => setView("read")}
+          onRead={(isEpub) => {
+            setEpub(isEpub);
+            setView("read");
+          }}
           onBack={() => setView("list")}
         />
       )}

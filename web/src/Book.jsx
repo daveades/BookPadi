@@ -52,6 +52,8 @@ export default function Book({ bookId, onRead, onBack }) {
     book.edition,
   ].filter(Boolean);
 
+  const isEpub = book.formats && book.formats.includes("epub");
+
   return (
     <article className="detail">
       <p className="detail__nav">
@@ -73,19 +75,18 @@ export default function Book({ bookId, onRead, onBack }) {
           <h2 className="detail__title">{book.title}</h2>
           <p className="detail__authors">{book.authors.join(", ")}</p>
           <p className="detail__actions">
-            {book.read_format ? (
-              <button type="button" className="btn" onClick={onRead}>
+            {isEpub || book.read_format ? (
+              <button
+                type="button"
+                className="btn"
+                onClick={() => onRead(isEpub)}
+              >
                 Read
               </button>
             ) : (
-              <>
-                <span className="detail__note">
-                  This book is available in EPUB format.
-                </span>
-                <a className="btn" href={"/books/" + bookId + "/read"}>
-                  Download EPUB
-                </a>
-              </>
+              <span className="detail__note">
+                This book has no format available to read.
+              </span>
             )}
           </p>
         </div>
