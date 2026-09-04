@@ -2,11 +2,17 @@ import glob
 import os
 import re
 
-from flask import Flask, abort, request, send_from_directory
+import psycopg
+from flask import Flask, abort, request, send_from_directory, session
 
-from bookpadi import books, db
+from bookpadi import books, db, progress, users
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-only-secret-key")
+
+
+def current_user_id():
+    return session.get("user_id")
 
 
 @app.get("/books")
@@ -27,6 +33,15 @@ def details(book_id):
         book = books.get_book(conn, book_id)
     if book is None:
         abort(404)
+    book = dict(book)
+    user_id = current_user_id()
+    if user_id is not None:
+        with db.connect() as conn:
+            saved = progress.get_progress(conn, user_id, book_id)
+        book["progress"] = {
+            "position": saved["position"],
+            "format": saved["format"],
+        } if saved else None
     return book
 
 
@@ -47,6 +62,79 @@ def cover(book_id):
     if location is None:
         abort(404)
     return send_from_directory(os.environ["MEDIA_DIR"], location)
+
+
+@app.post("/auth/register")
+def register():
+    email = request.json.get("email", "") if request.is_json else ""
+    password = request.json.get("password", "") if request.is_json else ""
+    try:
+        with db.connect() as conn:
+            user_id = users.register(conn, email, password)
+    except ValueError as e:
+        return {"error": str(e)}, 400
+    except psycopg.errors.UniqueViolation:
+        return {"error": "an account with that email already exists"}, 409
+    session["user_id"] = user_id
+    return {"id": user_id, "email": email.strip().lower()}, 201
+
+
+@app.post("/auth/login")
+def login():
+    email = request.json.get("email", "") if request.is_json else ""
+    password = request.json.get("password", "") if request.is_json else ""
+    if not email or not password:
+        return {"error": "email and password are required"}, 400
+    with db.connect() as conn:
+        user_id = users.authenticate(conn, email, password)
+    if user_id is None:
+        return {"error": "email or password is incorrect"}, 401
+    session["user_id"] = user_id
+    return {"id": user_id}
+
+@app.post("/auth/logout")
+def logout():
+    session.clear()
+    return {"ok": True}
+
+@app.get("/auth/me")
+def me():
+    user_id = current_user_id()
+    if user_id is None:
+        return {"user": None}
+    with db.connect() as conn:
+        user = users.get_by_id(conn, user_id)
+    if user is None:
+        session.clear()
+        return {"user": None}
+    return {"user": {"id": user["id"], "email": user["email"]}}
+
+
+@app.get("/books/<int:book_id>/progress")
+def get_progress(book_id):
+    user_id = current_user_id()
+    if user_id is None:
+        return {"error": "not signed in"}, 401
+    with db.connect() as conn:
+        saved = progress.get_progress(conn, user_id, book_id)
+    if saved is None:
+        return {"position": None}
+    return {"position": saved["position"], "format": saved["format"]}
+
+
+@app.put("/books/<int:book_id>/progress")
+def put_progress(book_id):
+    user_id = current_user_id()
+    if user_id is None:
+        return {"error": "not signed in"}, 401
+    data = request.get_json(silent=True) or {}
+    position = data.get("position")
+    fmt = data.get("format")
+    if not position or not fmt:
+        return {"error": "position and format are required"}, 400
+    with db.connect() as conn:
+        progress.save_progress(conn, user_id, book_id, position, fmt)
+    return {"ok": True}
 
 
 def _slug(title):

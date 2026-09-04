@@ -79,9 +79,9 @@ export default function Book({ bookId, onRead, onBack }) {
               <button
                 type="button"
                 className="btn"
-                onClick={() => onRead(isEpub)}
+                onClick={() => onRead(isEpub, book.read_format)}
               >
-                Read
+                {book.progress ? "Continue reading" : "Read"}
               </button>
             ) : (
               <span className="detail__note">

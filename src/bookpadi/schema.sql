@@ -78,6 +78,22 @@ create table book_format (
 
 create index on book_format (format_id);
 
+create table user_account (
+    id            bigint generated always as identity primary key,
+    email         text not null unique,
+    password_hash text not null,
+    created_at    timestamptz not null default now()
+);
+
+create table book_progress (
+    user_id    bigint not null references user_account (id) on delete cascade,
+    book_id    bigint not null references books (id) on delete cascade,
+    position   text not null,
+    format     text not null,
+    updated_at timestamptz not null default now(),
+    primary key (user_id, book_id)
+);
+
 insert into format (name, priority) 
 values 
     ('html', 1),

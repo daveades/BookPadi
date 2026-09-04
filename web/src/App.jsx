@@ -1,17 +1,30 @@
 import { useEffect, useState } from "react";
+import Auth from "./Auth";
 import Book from "./Book";
 import BookList from "./BookList";
 import Read from "./Read";
 import Search from "./Search";
 
 export default function App() {
+  const [user, setUser] = useState(null);
+  const [checking, setChecking] = useState(true);
   const [mode, setMode] = useState("browse");
   const [view, setView] = useState("list");
   const [bookId, setBookId] = useState(null);
   const [epub, setEpub] = useState(false);
+  const [readFormat, setReadFormat] = useState(null);
   const [query, setQuery] = useState("");
   const [books, setBooks] = useState(null);
   const [failed, setFailed] = useState(false);
+  const [bookSession, setBookSession] = useState(0);
+
+  useEffect(() => {
+    fetch("/auth/me")
+      .then((response) => response.json())
+      .then((data) => setUser(data.user))
+      .catch(() => setUser(null))
+      .finally(() => setChecking(false));
+  }, []);
 
   function load(path) {
     setBooks(null);
@@ -26,8 +39,8 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (mode === "browse") load("/books");
-  }, [mode]);
+    if (mode === "browse" && user) load("/books");
+  }, [mode, user]);
 
   function search(text) {
     setQuery(text);
@@ -47,6 +60,24 @@ export default function App() {
     setView("book");
   }
 
+  function signOut() {
+    fetch("/auth/logout", { method: "POST" });
+    setUser(null);
+    setView("list");
+    setBookId(null);
+  }
+
+  if (checking) return <p className="status">Loading.</p>;
+
+  if (!user || !user.email) {
+    return (
+      <div className="page">
+        <h1 className="masthead">BookPadi</h1>
+        <Auth onSignedIn={(data) => setUser({ id: data.id, email: data.email })} />
+      </div>
+    );
+  }
+
   const waiting = mode === "search" && !query;
 
   if (view === "read") {
@@ -54,14 +85,26 @@ export default function App() {
       <Read
         bookId={bookId}
         epub={epub}
-        onBack={() => setView("book")}
+        readFormat={readFormat}
+        onBack={() => {
+          setView("book");
+          setBookSession((n) => n + 1);
+        }}
       />
     );
   }
 
   return (
     <div className="page">
-      <h1 className="masthead">BookPadi</h1>
+      <div className="masthead-row">
+        <h1 className="masthead">BookPadi</h1>
+        <span className="who">
+          {user.email}
+          <button type="button" className="text-btn" onClick={signOut}>
+            Sign out
+          </button>
+        </span>
+      </div>
 
       {view === "list" && (
         <nav className="modes">
@@ -86,9 +129,11 @@ export default function App() {
 
       {view === "book" && (
         <Book
+          key={bookSession}
           bookId={bookId}
-          onRead={(isEpub) => {
+          onRead={(isEpub, format) => {
             setEpub(isEpub);
+            setReadFormat(format);
             setView("read");
           }}
           onBack={() => setView("list")}

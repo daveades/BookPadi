@@ -7,6 +7,7 @@ export default defineConfig({
     proxy: {
       "/books": "http://localhost:8000",
       "/search": "http://localhost:8000",
+      "/auth": "http://localhost:8000",
     },
   },
 });
