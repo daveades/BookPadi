@@ -5,7 +5,7 @@ import re
 import psycopg
 from flask import Flask, abort, request, send_from_directory, session
 
-from bookpadi import books, db, progress, users
+from bookpadi import books, db, ingest, progress, users
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-secret-key")
@@ -42,6 +42,8 @@ def details(book_id):
             "position": saved["position"],
             "format": saved["format"],
         } if saved else None
+        if saved and saved.get("format") and saved["format"] in (book.get("formats") or []):
+            book["read_format"] = saved["format"]
     return book
 
 
@@ -164,49 +166,178 @@ def _lines(raw):
     return [line.strip() for line in raw.splitlines() if line.strip()]
 
 
+@app.post("/books/inspect")
+def inspect():
+    file = None
+    format_name = None
+    for name in ("file", "epub", "pdf", "html"):
+        if name in request.files and request.files[name].filename:
+            file = request.files[name]
+            format_name = name if name in ("epub", "pdf", "html") else None
+            break
+
+    if not file:
+        for name, f in request.files.items():
+            if f.filename:
+                file = f
+                format_name = name if name in ("epub", "pdf", "html") else None
+                break
+
+    if not file:
+        return {"error": "no file uploaded"}, 400
+
+    if not format_name:
+        ext = os.path.splitext(file.filename)[1].lower().lstrip(".")
+        format_name = ext if ext in ingest.SUPPORTED_FORMATS else "epub"
+
+    file_bytes = file.read()
+    try:
+        ingest.validate_file(file_bytes, format_name)
+        meta = ingest.extract_metadata(file_bytes, format_name)
+    except ValueError as e:
+        return {"error": str(e)}, 400
+
+    clean_name = os.path.splitext(file.filename)[0].replace("-", " ").replace("_", " ").title()
+    return {
+        "format": format_name,
+        "title": meta.get("title") or clean_name,
+        "authors": meta.get("authors") or [],
+        "description": meta.get("description") or "",
+        "language": meta.get("language") or "en",
+        "pub_year": meta.get("pub_year"),
+        "publisher": meta.get("publisher") or "",
+        "topics": meta.get("topics") or [],
+        "license_name": meta.get("license_name") or "Open Access",
+        "license_url": meta.get("license_url") or "https://creativecommons.org/",
+        "has_cover": bool(meta.get("cover_bytes")),
+    }
+
+
 @app.post("/books")
 def add():
     form = request.form
-    for field in ("title", "language", "license_name", "license_url", "authors", "topics"):
-        if not form.get(field, "").strip():
-            return {"error": f"{field} is required"}, 400
+    uploads = {}
+    extracted_meta = {}
 
-    uploads = {n: f for n, f in request.files.items() if n != "cover" and f.filename}
+    # Gather and validate uploaded format files
+    for name, f in request.files.items():
+        if name != "cover" and f.filename:
+            fmt = name.lower().strip()
+            # If field name was generic 'file', guess format from extension
+            if fmt == "file":
+                fmt = os.path.splitext(f.filename)[1].lower().lstrip(".")
+            if fmt not in ingest.SUPPORTED_FORMATS:
+                return {"error": f"unsupported book format: '{fmt}'"}, 400
+            file_bytes = f.read()
+            try:
+                ingest.validate_file(file_bytes, fmt)
+            except ValueError as e:
+                return {"error": str(e)}, 400
+            uploads[fmt] = file_bytes
+            # Extract metadata from primary format
+            if not extracted_meta:
+                extracted_meta = ingest.extract_metadata(file_bytes, fmt)
+
     if not uploads:
-        return {"error": "at least one format file is required"}, 400
+        return {"error": "at least one valid book file (epub, pdf, html) is required"}, 400
 
-    year = form.get("pub_year", "").strip()
-    if year and not year.isdigit():
-        return {"error": "pub_year must be a number"}, 400
+    # Validate uploaded cover if provided
+    cover = request.files.get("cover")
+    cover_bytes = None
+    cover_ext = ".jpg"
+    if cover and cover.filename:
+        cover_bytes = cover.read()
+        try:
+            ingest.validate_file(cover_bytes, "cover")
+            cover_ext = os.path.splitext(cover.filename)[1].lower() or ".jpg"
+        except ValueError as e:
+            return {"error": str(e)}, 400
+    elif extracted_meta.get("cover_bytes"):
+        # Auto-use embedded cover from EPUB if not provided
+        cover_bytes = extracted_meta["cover_bytes"]
+        cover_ext = extracted_meta.get("cover_ext") or ".jpg"
+
+    # Merge form overrides with extracted metadata
+    title = form.get("title", "").strip() or extracted_meta.get("title")
+    if not title:
+        return {"error": "title is required and could not be extracted"}, 400
+
+    language = form.get("language", "").strip() or extracted_meta.get("language") or "en"
+    language = ingest.normalize_language(language)
+
+    description = form.get("description", "").strip() or extracted_meta.get("description") or None
+
+    year_str = form.get("pub_year", "").strip()
+    pub_year = None
+    if year_str:
+        if not year_str.isdigit():
+            return {"error": "pub_year must be a number"}, 400
+        pub_year = int(year_str)
+    elif extracted_meta.get("pub_year"):
+        pub_year = extracted_meta["pub_year"]
+
+    publisher = form.get("publisher", "").strip() or extracted_meta.get("publisher") or None
+    edition = form.get("edition", "").strip() or None
+
+    # Authors
+    authors_raw = form.get("authors", "").strip()
+    if authors_raw:
+        authors = _lines(authors_raw)
+    else:
+        authors = extracted_meta.get("authors") or ["Unknown"]
+
+    # Topics
+    topics_raw = form.get("topics", "").strip()
+    if topics_raw:
+        topics = _lines(topics_raw)
+    else:
+        topics = extracted_meta.get("topics") or ["General"]
+
+    # License
+    license_name = (
+        form.get("license_name", "").strip()
+        or extracted_meta.get("license_name")
+        or "Open Access"
+    )
+    license_url = (
+        form.get("license_url", "").strip()
+        or extracted_meta.get("license_url")
+        or "https://creativecommons.org/"
+    )
 
     media_dir = os.environ["MEDIA_DIR"]
     os.makedirs(os.path.join(media_dir, "books"), exist_ok=True)
     os.makedirs(os.path.join(media_dir, "covers"), exist_ok=True)
-    stem = _stem(media_dir, form["title"])
+    stem = _stem(media_dir, title)
 
+    # Save format files
     formats = {}
-    for name, upload in uploads.items():
-        formats[name] = f"books/{stem}.{name}"
-        upload.save(os.path.join(media_dir, formats[name]))
+    for fmt, data in uploads.items():
+        rel_path = f"books/{stem}.{fmt}"
+        full_path = os.path.join(media_dir, rel_path)
+        with open(full_path, "wb") as out:
+            out.write(data)
+        formats[fmt] = rel_path
 
+    # Save cover image
     cover_ref = None
-    cover = request.files.get("cover")
-    if cover and cover.filename:
-        cover_ref = f"covers/{stem}{os.path.splitext(cover.filename)[1].lower() or '.jpg'}"
-        cover.save(os.path.join(media_dir, cover_ref))
+    if cover_bytes:
+        cover_ref = f"covers/{stem}{cover_ext}"
+        with open(os.path.join(media_dir, cover_ref), "wb") as out:
+            out.write(cover_bytes)
 
     book = {
-        "title": form["title"].strip(),
-        "language": form["language"].strip(),
-        "description": form.get("description", "").strip() or None,
-        "pub_year": int(year) if year else None,
-        "publisher": form.get("publisher", "").strip() or None,
-        "edition": form.get("edition", "").strip() or None,
+        "title": title,
+        "language": language,
+        "description": description,
+        "pub_year": pub_year,
+        "publisher": publisher,
+        "edition": edition,
         "cover_ref": cover_ref,
-        "authors": _lines(form["authors"]),
-        "topics": _lines(form["topics"]),
+        "authors": authors,
+        "topics": topics,
         "formats": formats,
-        "license": {"name": form["license_name"].strip(), "url": form["license_url"].strip()},
+        "license": {"name": license_name, "url": license_url},
     }
 
     try:
@@ -214,3 +345,4 @@ def add():
             return {"id": books.create_book(conn, book)}, 201
     except (ValueError, KeyError) as e:
         return {"error": str(e)}, 400
+

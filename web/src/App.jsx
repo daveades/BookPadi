@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import AddBook from "./AddBook";
 import Auth from "./Auth";
 import Book from "./Book";
 import BookList from "./BookList";
@@ -22,6 +23,7 @@ export default function App() {
   const [history, setHistory] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyFailed, setHistoryFailed] = useState(false);
+  const [addingBook, setAddingBook] = useState(false);
 
   useEffect(() => {
     fetch("/auth/me")
@@ -138,7 +140,14 @@ export default function App() {
       <div className="masthead-row">
         <h1 className="masthead">BookPadi</h1>
         <span className="who">
-          {user.email}
+          <button
+            type="button"
+            className="text-btn text-btn--strong"
+            onClick={() => setAddingBook(true)}
+          >
+            + Add book
+          </button>
+          <span>{user.email}</span>
           <button type="button" className="text-btn" onClick={signOut}>
             Sign out
           </button>
@@ -232,6 +241,18 @@ export default function App() {
           )}
           <BookList books={books} onSelect={openBook} />
         </>
+      )}
+
+      {addingBook && (
+        <AddBook
+          onClose={() => setAddingBook(false)}
+          onBookAdded={(newId) => {
+            setAddingBook(false);
+            load("/books");
+            loadHistory();
+            openBook(newId);
+          }}
+        />
       )}
     </div>
   );

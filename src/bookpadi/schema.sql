@@ -96,6 +96,6 @@ create table book_progress (
 
 insert into format (name, priority) 
 values 
-    ('html', 1),
+    ('epub', 1),
     ('pdf', 2), 
-    ('epub', 3);
+    ('html', 3);

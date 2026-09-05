@@ -1,4 +1,4 @@
-READABLE_FORMATS = ("html", "pdf")
+READABLE_FORMATS = ("epub", "pdf", "html")
 
 
 def list_books(conn):
@@ -99,15 +99,19 @@ def _reuse_or_create(cur, table, name):
 
 def create_book(conn, book):
     for field in ("authors", "topics", "formats"):
-        if not book[field]:
+        if not book.get(field):
             raise ValueError(f"book has no {field}")
+
+    license_data = book.get("license") or {"name": "Open Access", "url": "https://creativecommons.org/"}
+    lic_name = license_data.get("name") or "Open Access"
+    lic_url = license_data.get("url") or "https://creativecommons.org/"
 
     with conn.transaction(), conn.cursor() as cur:
         cur.execute(
             "insert into license (name, license_url) values (%s, %s) on conflict (lower(name)) do nothing",
-            (book["license"]["name"], book["license"]["url"]),
+            (lic_name, lic_url),
         )
-        cur.execute("select id from license where lower(name) = lower(%s)", (book["license"]["name"],))
+        cur.execute("select id from license where lower(name) = lower(%s)", (lic_name,))
         license_id = cur.fetchone()["id"]
 
         cur.execute("""
@@ -135,3 +139,21 @@ def create_book(conn, book):
                         (book_id, row["id"], location))
 
     return book_id
+
+
+def add_book_format(conn, book_id, format_name, location):
+    with conn.transaction(), conn.cursor() as cur:
+        cur.execute("select id from format where name = %s", (format_name,))
+        row = cur.fetchone()
+        if row is None:
+            raise ValueError(f"unknown format: {format_name}")
+        cur.execute(
+            """
+            insert into book_format (book_id, format_id, location)
+            values (%s, %s, %s)
+            on conflict (book_id, format_id)
+            do update set location = excluded.location
+            """,
+            (book_id, row["id"], location),
+        )
+

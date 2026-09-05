@@ -52,7 +52,8 @@ export default function Book({ bookId, onRead, onBack }) {
     book.edition,
   ].filter(Boolean);
 
-  const isEpub = book.formats && book.formats.includes("epub");
+  const defaultFormat =
+    (book.progress && book.progress.format) || book.read_format || (book.formats && book.formats[0]);
 
   return (
     <article className="detail">
@@ -74,21 +75,40 @@ export default function Book({ bookId, onRead, onBack }) {
         <div>
           <h2 className="detail__title">{book.title}</h2>
           <p className="detail__authors">{book.authors.join(", ")}</p>
-          <p className="detail__actions">
-            {isEpub || book.read_format ? (
-              <button
-                type="button"
-                className="btn"
-                onClick={() => onRead(isEpub, book.read_format)}
-              >
-                {book.progress ? "Continue reading" : "Read"}
-              </button>
+          <div className="detail__actions">
+            {defaultFormat ? (
+              <>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => onRead(defaultFormat === "epub", defaultFormat)}
+                >
+                  {book.progress ? "Continue reading" : "Read"}
+                </button>
+                {book.formats && book.formats.length > 1 && (
+                  <div className="detail__format-options">
+                    <span className="detail__format-label">Or read in:</span>
+                    {book.formats
+                      .filter((f) => f !== defaultFormat)
+                      .map((f) => (
+                        <button
+                          key={f}
+                          type="button"
+                          className="text-btn text-btn--format"
+                          onClick={() => onRead(f === "epub", f)}
+                        >
+                          {f.toUpperCase()}
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </>
             ) : (
               <span className="detail__note">
                 This book has no format available to read.
               </span>
             )}
-          </p>
+          </div>
         </div>
       </div>
 
