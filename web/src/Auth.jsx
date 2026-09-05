@@ -72,7 +72,7 @@ export default function Auth({ onSignedIn }) {
           />
         </label>
         {error && <p className="auth__error">{error}</p>}
-        <button type="submit" className="btn" disabled={busy}>
+        <button type="submit" className="btn auth__submit" disabled={busy}>
           {busy ? "Please wait..." : mode === "login" ? "Sign in" : "Create account"}
         </button>
       </form>

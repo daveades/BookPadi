@@ -1,8 +1,10 @@
 :root {
-  --paper: #fdfdfc;
+  --paper: #fbfaf7;
+  --surface: #ffffff;
   --ink: #17171b;
   --muted: #6c6c74;
-  --rule: #e3e1dc;
+  --rule: #dfddd7;
+  --soft: #f1efe9;
   --sans: "Nunito Sans", system-ui, sans-serif;
 }
 
@@ -27,18 +29,32 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
 .page {
-  max-width: 40rem;
+  max-width: 46rem;
   margin: 0 auto;
-  padding: 3.5rem 1.5rem 5rem;
+  padding: 2.5rem 1.5rem 5rem;
 }
 
 .masthead {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  text-align: center;
-  margin: 0 0 2.5rem;
+  font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin: 0;
 }
 
 .status {
@@ -47,10 +63,18 @@ body {
   margin: 0 0 1.25rem;
 }
 
+.status--page {
+  display: grid;
+  min-height: 100%;
+  place-items: center;
+  margin: 0;
+}
+
 .list-head {
-  font-size: 1.125rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.8rem;
 }
 
 .books {
@@ -60,7 +84,7 @@ body {
 }
 
 .book {
-  padding: 1.25rem 0;
+  padding: 0;
   border-top: 1px solid var(--rule);
 }
 
@@ -70,10 +94,10 @@ body {
 
 .book__select {
   display: flex;
-  gap: 1rem;
-  align-items: flex-start;
+  gap: 1.1rem;
+  align-items: center;
   width: 100%;
-  padding: 0;
+  padding: 1.15rem 0.25rem;
   border: 0;
   background: none;
   color: inherit;
@@ -82,15 +106,27 @@ body {
   cursor: pointer;
 }
 
+.book__select:hover {
+  background: rgba(23, 23, 27, 0.025);
+}
+
 .book__cover {
   flex: none;
-  width: 3.5rem;
-  height: auto;
+  width: 3.75rem;
+  height: 5rem;
+  object-fit: cover;
   vertical-align: top;
+  background: var(--soft);
+}
+
+.book__cover--placeholder {
+  display: block;
+  border: 1px solid var(--rule);
 }
 
 .book__text {
   display: block;
+  flex: 1;
   min-width: 0;
 }
 
@@ -112,16 +148,28 @@ body {
   margin-top: 0.3rem;
 }
 
+.book__arrow {
+  flex: none;
+  color: #aaa8a1;
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform 140ms ease, color 140ms ease;
+}
+
+.book__select:hover .book__arrow {
+  color: var(--ink);
+  transform: translateX(2px);
+}
+
 .modes {
   display: flex;
-  justify-content: center;
-  gap: 2rem;
-  margin: 0 0 2.5rem;
+  gap: 1.75rem;
+  margin: 0 0 2rem;
   border-bottom: 1px solid var(--rule);
 }
 
 .mode {
-  padding: 0 0 0.75rem;
+  padding: 0 0 0.65rem;
   border: 0;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
@@ -143,7 +191,7 @@ body {
 }
 
 .ask {
-  margin: 0 0 2.5rem;
+  margin: 0 0 2rem;
 }
 
 .ask__box {
@@ -152,8 +200,8 @@ body {
   gap: 0.75rem;
   padding: 0.7rem 0.7rem 0.7rem 1.1rem;
   border: 1px solid var(--rule);
-  border-radius: 1.5rem;
-  background: #fff;
+  border-radius: 0;
+  background: var(--surface);
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
@@ -217,6 +265,12 @@ body {
   cursor: pointer;
 }
 
+.text-btn:disabled,
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .text-btn:hover {
   color: var(--ink);
 }
@@ -239,6 +293,12 @@ body {
   text-align: center;
   text-decoration: none;
   cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: transparent;
+  color: var(--ink);
 }
 
 .detail__nav {
@@ -255,7 +315,8 @@ body {
 .detail__cover {
   flex: none;
   width: 7.5rem;
-  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
   vertical-align: top;
 }
 
@@ -283,7 +344,9 @@ body {
 }
 
 .detail__blurb {
-  margin: 0 0 1.25rem;
+  margin: 0 0 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
 }
 
 .detail__row {
@@ -381,13 +444,20 @@ body {
 
 .masthead-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  margin: 0 0 2.5rem;
+  gap: 1rem;
+  margin: 0 0 2rem;
 }
 
 .masthead-row .masthead {
   margin: 0;
+}
+
+.masthead-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0.2rem 0 0;
 }
 
 .who {
@@ -396,6 +466,21 @@ body {
   gap: 0.75rem;
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+.auth-heading {
+  margin: 2.5rem auto 3rem;
+  max-width: 22rem;
+  text-align: center;
+}
+
+.auth-heading .masthead {
+  font-size: 2rem;
+}
+
+.auth-heading p {
+  color: var(--muted);
+  margin: 0.65rem 0 0;
 }
 
 .auth {
@@ -417,6 +502,11 @@ body {
   gap: 1.25rem;
 }
 
+.auth__submit {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -426,7 +516,8 @@ body {
 }
 
 .field input {
-  padding: 0.55rem 0.7rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
   border: 1px solid var(--rule);
   border-radius: 0;
   background: #fff;
@@ -446,31 +537,25 @@ body {
   margin: 0;
 }
 
-/* Continue Reading Card */
 .continue-card {
   margin: 0 0 2.5rem;
-  padding: 1.25rem 1.25rem 1.35rem;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(23, 23, 27, 0.04);
+  padding: 0 0 1.5rem;
+  border-bottom: 1px solid var(--rule);
 }
 
 .continue-card__header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 1rem;
-  padding-bottom: 0.6rem;
-  border-bottom: 1px solid var(--rule);
+  margin-bottom: 0.9rem;
 }
 
 .continue-card__tag {
-  font-size: 0.75rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: -0.01em;
   color: var(--ink);
+  margin: 0;
 }
 
 .continue-card__time {
@@ -487,8 +572,14 @@ body {
 .continue-card__cover {
   flex: none;
   width: 4.5rem;
-  height: auto;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  height: 6rem;
+  object-fit: cover;
+}
+
+.continue-card__cover--placeholder {
+  display: block;
+  border: 1px solid var(--rule);
+  background: var(--soft);
 }
 
 .continue-card__info {
@@ -523,7 +614,6 @@ body {
   gap: 1.25rem;
 }
 
-/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -545,7 +635,6 @@ body {
   letter-spacing: 0.04em;
 }
 
-/* Library / Reading History */
 .library {
   margin: 0 0 2.5rem;
 }
@@ -603,7 +692,8 @@ body {
 .library-item__cover {
   flex: none;
   width: 3.5rem;
-  height: auto;
+  height: 4.75rem;
+  object-fit: cover;
 }
 
 .library-item__cover--placeholder {
@@ -618,6 +708,12 @@ body {
 }
 
 .library-item__title {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
   font-size: 1.0625rem;
   font-weight: 600;
   line-height: 1.35;
@@ -673,7 +769,6 @@ body {
   padding: 2rem 0;
 }
 
-/* Format Options in Book Details */
 .detail__format-options {
   display: flex;
   align-items: baseline;
@@ -694,7 +789,6 @@ body {
   text-underline-offset: 2px;
 }
 
-/* Modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -709,7 +803,7 @@ body {
 }
 
 .modal {
-  background: var(--paper);
+  background: var(--surface);
   border: 1px solid var(--rule);
   width: 100%;
   max-width: 36rem;
@@ -755,7 +849,6 @@ body {
   border-top: 1px solid var(--rule);
 }
 
-/* Dropzone */
 .dropzone {
   border: 2px dashed var(--rule);
   padding: 1.5rem;
@@ -790,7 +883,6 @@ body {
   color: var(--muted);
 }
 
-/* Form Grid */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -826,4 +918,63 @@ body {
   font-weight: 600;
 }
 
+.search-view .list-head {
+  margin-bottom: 0.75rem;
+}
 
+@media (max-width: 520px) {
+  .page {
+    padding: 1.5rem 1rem 3.5rem;
+  }
+
+  .masthead-note {
+    display: none;
+  }
+
+  .masthead-row {
+    margin-bottom: 1.5rem;
+  }
+
+  .who {
+    gap: 0.9rem;
+  }
+
+  .modes {
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .mode {
+    font-size: 0.875rem;
+  }
+
+  .detail__head {
+    gap: 1rem;
+  }
+
+  .detail__cover {
+    width: 5.5rem;
+  }
+
+  .detail__title {
+    font-size: 1.2rem;
+  }
+
+  .continue-card__actions,
+  .library-item__actions {
+    gap: 0.85rem;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    max-height: 94vh;
+    padding: 1.25rem 1rem;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+  }
+}

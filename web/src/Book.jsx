@@ -31,7 +31,7 @@ export default function Book({ bookId, onRead, onBack }) {
       <article className="detail">
         <p className="detail__nav">
           <button type="button" className="text-btn" onClick={onBack}>
-            Back
+            ← Back to library
           </button>
         </p>
         <p className="status">
@@ -59,7 +59,7 @@ export default function Book({ bookId, onRead, onBack }) {
     <article className="detail">
       <p className="detail__nav">
         <button type="button" className="text-btn" onClick={onBack}>
-          Back
+          ← Back to library
         </button>
       </p>
 

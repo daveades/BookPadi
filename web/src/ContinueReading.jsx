@@ -19,25 +19,26 @@ export function formatTimeAgo(isoDate) {
 export default function ContinueReading({ history, onResume, onSelect }) {
   if (!history || history.length === 0) return null;
 
-  // Most recent book in progress
   const current = history[0];
   const timeAgo = formatTimeAgo(current.updated_at);
 
   return (
     <section className="continue-card" aria-label="Continue reading">
       <div className="continue-card__header">
-        <span className="continue-card__tag">Continue Reading</span>
+        <h2 className="continue-card__tag">Continue reading</h2>
         {timeAgo && <span className="continue-card__time">{timeAgo}</span>}
       </div>
 
       <div className="continue-card__content">
-        {current.cover_ref && (
+        {current.cover_ref ? (
           <img
             className="continue-card__cover"
             src={"/books/" + current.id + "/cover"}
             alt=""
             loading="lazy"
           />
+        ) : (
+          <span className="continue-card__cover continue-card__cover--placeholder" aria-hidden="true" />
         )}
         <div className="continue-card__info">
           <h3 className="continue-card__title">{current.title}</h3>

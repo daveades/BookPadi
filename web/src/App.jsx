@@ -108,12 +108,15 @@ export default function App() {
     setBookId(null);
   }
 
-  if (checking) return <p className="status">Loading.</p>;
+  if (checking) return <p className="status status--page">Loading your library…</p>;
 
   if (!user || !user.email) {
     return (
       <div className="page">
-        <h1 className="masthead">BookPadi</h1>
+        <div className="auth-heading">
+          <h1 className="masthead">BookPadi</h1>
+          <p>Your personal shelf for open books.</p>
+        </div>
         <Auth onSignedIn={(data) => setUser({ id: data.id, email: data.email })} />
       </div>
     );
@@ -138,7 +141,10 @@ export default function App() {
   return (
     <div className="page">
       <div className="masthead-row">
-        <h1 className="masthead">BookPadi</h1>
+        <div>
+          <h1 className="masthead">BookPadi</h1>
+          <p className="masthead-note">Your reading shelf</p>
+        </div>
         <span className="who">
           <button
             type="button"
@@ -154,7 +160,7 @@ export default function App() {
       </div>
 
       {view === "list" && (
-        <nav className="modes">
+        <nav className="modes" aria-label="Library sections">
           <button
             className={mode === "browse" ? "mode mode--on" : "mode"}
             onClick={() => show("browse")}
@@ -190,7 +196,12 @@ export default function App() {
         />
       )}
 
-      {view === "list" && mode === "search" && <Search onSearch={search} />}
+      {view === "list" && mode === "search" && (
+        <section className="search-view">
+          <h2 className="list-head">Search the library</h2>
+          <Search onSearch={search} />
+        </section>
+      )}
 
       {view === "book" && (
         <Book
@@ -232,7 +243,7 @@ export default function App() {
       {view === "list" && mode !== "library" && !waiting && !failed && books !== null && books.length > 0 && (
         <>
           {mode === "browse" ? (
-            <h2 className="list-head">Recently added</h2>
+            <h2 className="list-head">All books</h2>
           ) : (
             <p className="status">
               {books.length} {books.length === 1 ? "book" : "books"} for {query}
@@ -256,4 +267,3 @@ export default function App() {
     </div>
   );
 }
-

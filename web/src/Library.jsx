@@ -54,20 +54,13 @@ export default function Library({ history, loading, failed, onResume, onSelect, 
                 )}
 
                 <div className="library-item__body">
-                  <h3
+                  <button
+                    type="button"
                     className="library-item__title"
-                    role="button"
-                    tabIndex={0}
                     onClick={() => onResume(book)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onResume(book);
-                      }
-                    }}
                   >
                     {book.title}
-                  </h3>
+                  </button>
                   <p className="library-item__authors">
                     {book.authors && book.authors.join(", ")}
                   </p>
