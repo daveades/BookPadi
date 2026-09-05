@@ -168,6 +168,9 @@ def _lines(raw):
 
 @app.post("/books/inspect")
 def inspect():
+    if current_user_id() is None:
+        return {"error": "not signed in"}, 401
+
     file = None
     format_name = None
     for name in ("file", "epub", "pdf", "html"):
@@ -215,6 +218,9 @@ def inspect():
 
 @app.post("/books")
 def add():
+    if current_user_id() is None:
+        return {"error": "not signed in"}, 401
+
     form = request.form
     uploads = {}
     extracted_meta = {}
@@ -345,4 +351,3 @@ def add():
             return {"id": books.create_book(conn, book)}, 201
     except (ValueError, KeyError) as e:
         return {"error": str(e)}, 400
-
