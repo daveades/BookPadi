@@ -55,7 +55,10 @@ def read(book_id):
     if location is None:
         abort(404)
 
-    return send_from_directory(os.environ["MEDIA_DIR"], location)
+    response = send_from_directory(os.environ["MEDIA_DIR"], location)
+    if response.mimetype == "text/html":
+        response.headers["Content-Security-Policy"] = "sandbox allow-same-origin"
+    return response
 
 @app.get("/books/<int:book_id>/cover")
 def cover(book_id):
