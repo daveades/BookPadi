@@ -124,11 +124,11 @@ def create_book(conn, book):
 
         for name in book["authors"]:
             author_id = _reuse_or_create(cur, "author", name)
-            cur.execute("insert into book_author (book_id, author_id) values (%s, %s)", (book_id, author_id))
+            cur.execute("insert into book_author (book_id, author_id) values (%s, %s) on conflict (book_id, author_id) do nothing", (book_id, author_id))
 
         for name in book["topics"]:
             topic_id = _reuse_or_create(cur, "topic", name)
-            cur.execute("insert into book_topic (book_id, topic_id) values (%s, %s)", (book_id, topic_id))
+            cur.execute("insert into book_topic (book_id, topic_id) values (%s, %s) on conflict (book_id, topic_id) do nothing", (book_id, topic_id))
 
         for name, location in book["formats"].items():
             cur.execute("select id from format where name = %s", (name,))
@@ -156,4 +156,3 @@ def add_book_format(conn, book_id, format_name, location):
             """,
             (book_id, row["id"], location),
         )
-
