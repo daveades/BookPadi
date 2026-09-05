@@ -147,7 +147,6 @@ export default function App() {
           >
             + Add book
           </button>
-          <span>{user.email}</span>
           <button type="button" className="text-btn" onClick={signOut}>
             Sign out
           </button>
