@@ -282,8 +282,11 @@ def add():
         if not year_str.isdigit():
             return {"error": "pub_year must be a number"}, 400
         pub_year = int(year_str)
-    elif extracted_meta.get("pub_year"):
+    elif extracted_meta.get("pub_year") is not None:
         pub_year = extracted_meta["pub_year"]
+
+    if pub_year is not None and not 1 <= pub_year <= 2100:
+        return {"error": "pub_year must be between 1 and 2100"}, 400
 
     publisher = form.get("publisher", "").strip() or extracted_meta.get("publisher") or None
     edition = form.get("edition", "").strip() or None

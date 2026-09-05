@@ -393,6 +393,10 @@ def ingest_file(conn, media_dir, file_path, title=None, authors=None, language=N
     validate_file(data, ext)
     meta = extract_metadata(data, ext)
 
+    pub_year = meta.get("pub_year")
+    if pub_year is not None and not 1 <= pub_year <= 2100:
+        raise ValueError("pub_year must be between 1 and 2100")
+
     final_title = (
         title
         or meta.get("title")
@@ -425,7 +429,7 @@ def ingest_file(conn, media_dir, file_path, title=None, authors=None, language=N
         "title": final_title,
         "language": final_language,
         "description": meta.get("description"),
-        "pub_year": meta.get("pub_year"),
+        "pub_year": pub_year,
         "publisher": meta.get("publisher"),
         "edition": None,
         "cover_ref": cover_ref,
@@ -465,4 +469,3 @@ if __name__ == "__main__":
             topics=args.topic,
         )
         print(f"Successfully ingested book ID {book_id} from {args.file}")
-
