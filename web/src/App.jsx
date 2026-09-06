@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Navigate, Route, Routes, useLocation, useMatch, useNavigate } from "react-router-dom";
 import AddBook from "./AddBook";
 import Auth from "./Auth";
 import Book from "./Book";
@@ -11,11 +12,6 @@ import Search from "./Search";
 export default function App() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
-  const [mode, setMode] = useState("browse");
-  const [view, setView] = useState("list");
-  const [bookId, setBookId] = useState(null);
-  const [epub, setEpub] = useState(false);
-  const [readFormat, setReadFormat] = useState(null);
   const [query, setQuery] = useState("");
   const [books, setBooks] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -24,6 +20,18 @@ export default function App() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyFailed, setHistoryFailed] = useState(false);
   const [addingBook, setAddingBook] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const bookMatch = useMatch("/books/:bookId");
+  const readerMatch = useMatch("/books/:bookId/read/:format");
+  const mode =
+    location.pathname === "/"
+      ? "browse"
+      : location.pathname === "/library"
+        ? "library"
+        : location.pathname === "/search"
+          ? "search"
+          : null;
 
   useEffect(() => {
     fetch("/auth/me")
@@ -76,36 +84,36 @@ export default function App() {
   }
 
   function show(next) {
-    setMode(next);
-    setView("list");
-    setBookId(null);
     setQuery("");
     if (next === "search") setBooks(null);
     if (next === "library") loadHistory();
+    navigate(next === "browse" ? "/" : "/" + next);
+  }
+
+  function sourceRoute() {
+    if (mode) return location.pathname;
+    return location.state?.from || "/";
   }
 
   function openBook(id) {
-    setBookId(id);
-    setView("book");
+    navigate("/books/" + encodeURIComponent(id), { state: { from: sourceRoute() } });
   }
 
   function resumeBook(book) {
-    setBookId(book.id);
     const isEpub =
       book.progress_format === "epub" ||
       (book.formats && book.formats.includes("epub") && !book.progress_format);
     const format = book.progress_format || (isEpub ? "epub" : "pdf");
-    setEpub(isEpub);
-    setReadFormat(format);
-    setView("read");
+    navigate("/books/" + encodeURIComponent(book.id) + "/read/" + format, {
+      state: { from: sourceRoute() },
+    });
   }
 
   function signOut() {
     fetch("/auth/logout", { method: "POST" });
     setUser(null);
     setHistory(null);
-    setView("list");
-    setBookId(null);
+    navigate("/", { replace: true });
   }
 
   if (checking) return <p className="status status--page">Loading your library…</p>;
@@ -122,21 +130,62 @@ export default function App() {
     );
   }
 
-  const waiting = mode === "search" && !query;
+  if (readerMatch) {
+    const { bookId, format } = readerMatch.params;
+    const supported = ["epub", "pdf", "html"].includes(format);
 
-  if (view === "read") {
     return (
-      <Read
-        bookId={bookId}
-        epub={epub}
-        readFormat={readFormat}
-        onBack={() => {
-          setView("book");
-          setBookSession((n) => n + 1);
-        }}
-      />
+      <Routes>
+        <Route
+          path="/books/:bookId/read/:format"
+          element={
+            supported ? (
+              <Read
+                bookId={bookId}
+                epub={format === "epub"}
+                readFormat={format}
+                onBack={() => {
+                  setBookSession((number) => number + 1);
+                  navigate("/books/" + encodeURIComponent(bookId), {
+                    replace: true,
+                    state: { from: location.state?.from || "/" },
+                  });
+                }}
+              />
+            ) : (
+              <Navigate to={"/books/" + encodeURIComponent(bookId)} replace />
+            )
+          }
+        />
+      </Routes>
     );
   }
+
+  const waiting = mode === "search" && !query;
+  const results = (
+    <>
+      {waiting && <p className="status">Search for a title, an author or a topic.</p>}
+      {!waiting && failed && <p className="status">The library did not answer.</p>}
+      {!waiting && !failed && books === null && <p className="status">Loading.</p>}
+      {!waiting && !failed && books !== null && books.length === 0 && (
+        <p className="status">
+          {mode === "search" ? `Nothing matches ${query}.` : "There are no books yet."}
+        </p>
+      )}
+      {!waiting && !failed && books !== null && books.length > 0 && (
+        <>
+          {mode === "browse" ? (
+            <h2 className="list-head">All books</h2>
+          ) : (
+            <p className="status">
+              {books.length} {books.length === 1 ? "book" : "books"} for {query}
+            </p>
+          )}
+          <BookList books={books} onSelect={openBook} />
+        </>
+      )}
+    </>
+  );
 
   return (
     <div className="page">
@@ -159,7 +208,7 @@ export default function App() {
         </span>
       </div>
 
-      {view === "list" && (
+      {mode && (
         <nav className="modes" aria-label="Library sections">
           <button
             className={mode === "browse" ? "mode mode--on" : "mode"}
@@ -185,73 +234,59 @@ export default function App() {
         </nav>
       )}
 
-      {view === "list" && mode === "library" && (
-        <Library
-          history={history}
-          loading={historyLoading}
-          failed={historyFailed}
-          onResume={resumeBook}
-          onSelect={openBook}
-          onBrowse={() => show("browse")}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <ContinueReading history={history} onResume={resumeBook} onSelect={openBook} />
+              {results}
+            </>
+          }
         />
-      )}
-
-      {view === "list" && mode === "search" && (
-        <section className="search-view">
-          <h2 className="list-head">Search the library</h2>
-          <Search onSearch={search} />
-        </section>
-      )}
-
-      {view === "book" && (
-        <Book
-          key={bookSession}
-          bookId={bookId}
-          onRead={(isEpub, format) => {
-            setEpub(isEpub);
-            setReadFormat(format);
-            setView("read");
-          }}
-          onBack={() => setView("list")}
+        <Route
+          path="/library"
+          element={
+            <Library
+              history={history}
+              loading={historyLoading}
+              failed={historyFailed}
+              onResume={resumeBook}
+              onSelect={openBook}
+              onBrowse={() => show("browse")}
+            />
+          }
         />
-      )}
-
-      {view === "list" && mode === "browse" && (
-        <ContinueReading
-          history={history}
-          onResume={resumeBook}
-          onSelect={openBook}
+        <Route
+          path="/search"
+          element={
+            <>
+              <section className="search-view">
+                <h2 className="list-head">Search the library</h2>
+                <Search onSearch={search} />
+              </section>
+              {results}
+            </>
+          }
         />
-      )}
-
-      {view === "list" && mode !== "library" && waiting && (
-        <p className="status">Search for a title, an author or a topic.</p>
-      )}
-      {view === "list" && mode !== "library" && !waiting && failed && (
-        <p className="status">The library did not answer.</p>
-      )}
-      {view === "list" && mode !== "library" && !waiting && !failed && books === null && (
-        <p className="status">Loading.</p>
-      )}
-
-      {view === "list" && mode !== "library" && !waiting && !failed && books !== null && books.length === 0 && (
-        <p className="status">
-          {mode === "search" ? `Nothing matches ${query}.` : "There are no books yet."}
-        </p>
-      )}
-
-      {view === "list" && mode !== "library" && !waiting && !failed && books !== null && books.length > 0 && (
-        <>
-          {mode === "browse" ? (
-            <h2 className="list-head">All books</h2>
-          ) : (
-            <p className="status">
-              {books.length} {books.length === 1 ? "book" : "books"} for {query}
-            </p>
-          )}
-          <BookList books={books} onSelect={openBook} />
-        </>
-      )}
+        <Route
+          path="/books/:bookId"
+          element={
+            <Book
+              key={bookSession}
+              bookId={bookMatch?.params.bookId}
+              onRead={(_, format) =>
+                navigate(
+                  "/books/" + encodeURIComponent(bookMatch.params.bookId) + "/read/" + format,
+                  { state: { from: location.state?.from || "/" } },
+                )
+              }
+              onBack={() => navigate(location.state?.from || "/")}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
 
       {addingBook && (
         <AddBook
@@ -260,7 +295,7 @@ export default function App() {
             setAddingBook(false);
             load("/books");
             loadHistory();
-            openBook(newId);
+            navigate("/books/" + encodeURIComponent(newId), { state: { from: "/" } });
           }}
         />
       )}

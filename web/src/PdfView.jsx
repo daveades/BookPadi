@@ -14,6 +14,7 @@ export default function PdfView({ bookId, onBack }) {
   const scrollRef = useRef(null);
   const currentRef = useRef(1);
   const scaleRef = useRef(1);
+  const activeRef = useRef(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [failed, setFailed] = useState(false);
@@ -26,6 +27,7 @@ export default function PdfView({ bookId, onBack }) {
     pd.rendering = true;
     try {
       const pg = await pdf.getPage(num);
+      if (!activeRef.current || pagesRef.current[num - 1] !== pd) return;
       const viewport = pg.getViewport({ scale: scaleRef.current });
       const canvas = pd.canvas;
       if (!canvas) return;
@@ -36,12 +38,16 @@ export default function PdfView({ bookId, onBack }) {
       canvas.style.height = viewport.height + "px";
       const ctx = canvas.getContext("2d");
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      await pg.render({ canvasContext: ctx, viewport }).promise;
+      pd.task = pg.render({ canvasContext: ctx, viewport });
+      await pd.task.promise;
       pd.rendered = scaleRef.current;
     } catch (err) {
-      console.error(`Page ${num} render error:`, err);
+      if (err.name !== "RenderingCancelledException") {
+        console.error(`Page ${num} render error:`, err);
+      }
     } finally {
       pd.rendering = false;
+      pd.task = null;
     }
   }, []);
 
@@ -64,6 +70,7 @@ export default function PdfView({ bookId, onBack }) {
     let saveTimer;
     let restoreTimer;
     let intervalTimer;
+    activeRef.current = true;
 
     function flush() {
       const c = currentRef.current;
@@ -102,7 +109,10 @@ export default function PdfView({ bookId, onBack }) {
         if (!res.ok) throw new Error(res.status);
         const buf = await res.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-        if (stopped) return;
+        if (stopped) {
+          await pdf.destroy();
+          return;
+        }
         pdfRef.current = pdf;
         setTotal(pdf.numPages);
 
@@ -111,6 +121,7 @@ export default function PdfView({ bookId, onBack }) {
           el: null,
           rendering: false,
           rendered: false,
+          task: null,
           canvas: null,
         }));
 
@@ -131,7 +142,6 @@ export default function PdfView({ bookId, onBack }) {
         );
         observerRef.current = obs;
 
-        // Render first page right away
         renderPage(1);
 
         const scrollEl = scrollRef.current;
@@ -166,6 +176,7 @@ export default function PdfView({ bookId, onBack }) {
 
     return () => {
       stopped = true;
+      activeRef.current = false;
       clearTimeout(saveTimer);
       clearTimeout(restoreTimer);
       clearInterval(intervalTimer);
@@ -175,10 +186,14 @@ export default function PdfView({ bookId, onBack }) {
         scrollRef.current.removeEventListener("scroll", onScroll);
         scrollRef.current.removeEventListener("scroll", onScrollSave);
       }
-      if (pdfRef.current) pdfRef.current.destroy();
+      for (const pd of pagesRef.current) {
+        if (pd.task) pd.task.cancel();
+      }
+      const pdf = pdfRef.current;
       pdfRef.current = null;
       pagesRef.current = [];
       currentRef.current = 1;
+      if (pdf) pdf.destroy().catch(() => {});
     };
   }, [bookId, renderPage, goTo]);
 
