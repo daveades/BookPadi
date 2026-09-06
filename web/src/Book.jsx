@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 
-export default function Book({ bookId, onRead, onBack }) {
+export default function Book({ bookId, canDelete, onRead, onBack, onDeleted }) {
   const [book, setBook] = useState(null);
   const [failed, setFailed] = useState(false);
   const [missing, setMissing] = useState(false);
   const [coverHidden, setCoverHidden] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteFailed, setDeleteFailed] = useState(null);
 
   useEffect(() => {
     setBook(null);
     setFailed(false);
     setMissing(false);
     setCoverHidden(false);
+    setDeleting(false);
+    setDeleteFailed(null);
     fetch("/books/" + bookId)
       .then((response) => {
         if (response.status === 404) {
@@ -25,6 +29,22 @@ export default function Book({ bookId, onRead, onBack }) {
       })
       .catch(() => setFailed(true));
   }, [bookId]);
+
+  async function deleteBook() {
+    if (!window.confirm(`Delete ${book.title}? This cannot be undone.`)) return;
+    setDeleting(true);
+    setDeleteFailed(null);
+    try {
+      const response = await fetch("/books/" + bookId, { method: "DELETE" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "The book could not be deleted.");
+      onDeleted();
+    } catch (error) {
+      setDeleteFailed(error.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   if (failed || missing || book === null) {
     return (
@@ -130,6 +150,20 @@ export default function Book({ bookId, onRead, onBack }) {
         <span className="detail__label">License:</span>{" "}
         <a href={book.license_url}>{book.license_name}</a>
       </p>
+
+      {canDelete && (
+        <div className="detail__admin">
+          <button
+            type="button"
+            className="text-btn text-btn--delete"
+            disabled={deleting}
+            onClick={deleteBook}
+          >
+            {deleting ? "Deleting…" : "Delete book"}
+          </button>
+          {deleteFailed && <p className="auth__error">{deleteFailed}</p>}
+        </div>
+      )}
     </article>
   );
 }

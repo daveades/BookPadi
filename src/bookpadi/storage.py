@@ -46,3 +46,14 @@ def prefix_exists(prefix):
         MaxKeys=1,
     )
     return response.get("KeyCount", 0) > 0
+
+
+def delete_objects(keys):
+    if not keys:
+        return
+    response = _client().delete_objects(
+        Bucket=os.environ["R2_BUCKET"],
+        Delete={"Objects": [{"Key": key} for key in keys], "Quiet": True},
+    )
+    if response.get("Errors"):
+        raise RuntimeError("R2 did not delete every book object")

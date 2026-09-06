@@ -156,3 +156,17 @@ def add_book_format(conn, book_id, format_name, location):
             """,
             (book_id, row["id"], location),
         )
+
+
+def delete_book(conn, book_id):
+    with conn.transaction(), conn.cursor() as cur:
+        cur.execute("select cover_ref from books where id = %s for update", (book_id,))
+        book = cur.fetchone()
+        if book is None:
+            return None
+        cur.execute("select location from book_format where book_id = %s", (book_id,))
+        keys = [row["location"] for row in cur.fetchall()]
+        if book["cover_ref"]:
+            keys.append(book["cover_ref"])
+        cur.execute("delete from books where id = %s", (book_id,))
+        return keys

@@ -337,6 +337,20 @@ textarea:focus-visible {
   margin: 1rem 0 0;
 }
 
+.detail__admin {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+.text-btn--delete {
+  color: #8a2d2d;
+}
+
+.text-btn--delete:hover {
+  color: #5f1717;
+}
+
 .detail__note {
   display: block;
   color: var(--muted);

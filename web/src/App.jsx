@@ -125,7 +125,7 @@ export default function App() {
           <h1 className="masthead">BookPadi</h1>
           <p>Your personal shelf for open books.</p>
         </div>
-        <Auth onSignedIn={(data) => setUser({ id: data.id, email: data.email })} />
+        <Auth onSignedIn={setUser} />
       </div>
     );
   }
@@ -275,6 +275,7 @@ export default function App() {
             <Book
               key={bookSession}
               bookId={bookMatch?.params.bookId}
+              canDelete={user.is_admin}
               onRead={(_, format) =>
                 navigate(
                   "/books/" + encodeURIComponent(bookMatch.params.bookId) + "/read/" + format,
@@ -282,6 +283,10 @@ export default function App() {
                 )
               }
               onBack={() => navigate(location.state?.from || "/")}
+              onDeleted={() => {
+                loadHistory();
+                navigate("/", { replace: true });
+              }}
             />
           }
         />

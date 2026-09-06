@@ -28,6 +28,11 @@ def current_user_id():
     return session.get("user_id")
 
 
+def user_is_admin(user):
+    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+    return bool(user and admin_email and user["email"].lower() == admin_email)
+
+
 @app.get("/books")
 def browse():
     with db.connect() as conn:
@@ -58,6 +63,22 @@ def details(book_id):
         if saved and saved.get("format") and saved["format"] in (book.get("formats") or []):
             book["read_format"] = saved["format"]
     return book
+
+
+@app.delete("/books/<int:book_id>")
+def delete_book(book_id):
+    user_id = current_user_id()
+    if user_id is None:
+        return {"error": "not signed in"}, 401
+    with db.connect() as conn:
+        user = users.get_by_id(conn, user_id)
+        if not user_is_admin(user):
+            return {"error": "administrator access required"}, 403
+        object_keys = books.delete_book(conn, book_id)
+    if object_keys is None:
+        return {"error": "book not found"}, 404
+    storage.delete_objects(object_keys)
+    return {"ok": True}
 
 
 @app.get("/books/<int:book_id>/read")
@@ -170,7 +191,13 @@ def me():
     if user is None:
         session.clear()
         return {"user": None}
-    return {"user": {"id": user["id"], "email": user["email"]}}
+    return {
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+            "is_admin": user_is_admin(user),
+        }
+    }
 
 
 @app.get("/books/history")
