@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "A searchable library of openly licensed books"
 requires-python = ">=3.12"
 dependencies = [
+    "boto3>=1.35",
     "flask>=3",
     "psycopg[binary]>=3",
     "gunicorn>=23",

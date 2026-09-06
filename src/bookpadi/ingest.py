@@ -377,8 +377,8 @@ def extract_metadata(stream_or_bytes, format_name):
     }
 
 
-def ingest_file(conn, media_dir, file_path, title=None, authors=None, language=None, topics=None):
-    from bookpadi import books
+def ingest_file(conn, file_path, title=None, authors=None, language=None, topics=None):
+    from bookpadi import books, storage
 
     if not os.path.isfile(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
@@ -409,21 +409,26 @@ def ingest_file(conn, media_dir, file_path, title=None, authors=None, language=N
     # Generate slug stem
     from bookpadi.routes import _stem
 
-    os.makedirs(os.path.join(media_dir, "books"), exist_ok=True)
-    os.makedirs(os.path.join(media_dir, "covers"), exist_ok=True)
-    stem = _stem(media_dir, final_title)
+    stem = _stem(final_title)
 
     rel_format_path = f"books/{stem}.{ext}"
-    full_format_path = os.path.join(media_dir, rel_format_path)
-    with open(full_format_path, "wb") as out:
-        out.write(data)
+    content_types = {
+        "epub": "application/epub+zip",
+        "pdf": "application/pdf",
+        "html": "text/html; charset=utf-8",
+    }
+    storage.put_object(rel_format_path, data, content_types[ext])
 
     cover_ref = None
     if meta.get("cover_bytes"):
         c_ext = meta.get("cover_ext") or ".jpg"
         cover_ref = f"covers/{stem}{c_ext}"
-        with open(os.path.join(media_dir, cover_ref), "wb") as out:
-            out.write(meta["cover_bytes"])
+        cover_content_types = {
+            ".jpg": "image/jpeg",
+            ".png": "image/png",
+            ".webp": "image/webp",
+        }
+        storage.put_object(cover_ref, meta["cover_bytes"], cover_content_types[c_ext])
 
     book = {
         "title": final_title,
@@ -457,11 +462,9 @@ if __name__ == "__main__":
     parser.add_argument("--language", help="Override book language")
     args = parser.parse_args()
 
-    media_directory = os.environ.get("MEDIA_DIR", os.path.abspath("media"))
     with db.connect() as db_conn:
         book_id = ingest_file(
             db_conn,
-            media_directory,
             args.file,
             title=args.title,
             authors=args.author,

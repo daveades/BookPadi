@@ -1,14 +1,27 @@
-import glob
 import os
 import re
 
 import psycopg
-from flask import Flask, abort, request, send_from_directory, session
+from flask import Flask, Response, abort, request, session
+from werkzeug.http import http_date
 
-from bookpadi import books, db, ingest, progress, users
+from bookpadi import books, db, ingest, progress, storage, users
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-secret-key")
+
+BOOK_CONTENT_TYPES = {
+    "epub": "application/epub+zip",
+    "pdf": "application/pdf",
+    "html": "text/html; charset=utf-8",
+}
+
+COVER_CONTENT_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+}
 
 
 def current_user_id():
@@ -55,7 +68,31 @@ def read(book_id):
     if location is None:
         abort(404)
 
-    response = send_from_directory(os.environ["MEDIA_DIR"], location)
+    stored_object = storage.get_object(location, request.headers.get("Range"))
+    if stored_object is None:
+        abort(404)
+
+    body = stored_object["Body"]
+    status = 206 if stored_object.get("ContentRange") else 200
+    response = Response(
+        body.iter_chunks(chunk_size=64 * 1024),
+        status=status,
+        content_type=(
+            stored_object.get("ContentType")
+            or BOOK_CONTENT_TYPES.get(os.path.splitext(location)[1].lstrip("."))
+            or "application/octet-stream"
+        ),
+    )
+    response.call_on_close(body.close)
+    if stored_object.get("ContentRange"):
+        response.headers["Content-Range"] = stored_object["ContentRange"]
+    if stored_object.get("ContentLength") is not None:
+        response.headers["Content-Length"] = str(stored_object["ContentLength"])
+    if stored_object.get("ETag"):
+        response.headers["ETag"] = stored_object["ETag"]
+    if stored_object.get("LastModified"):
+        response.headers["Last-Modified"] = http_date(stored_object["LastModified"])
+    response.headers["Accept-Ranges"] = "bytes"
     if response.mimetype == "text/html":
         response.headers["Content-Security-Policy"] = "sandbox allow-same-origin"
     return response
@@ -66,7 +103,28 @@ def cover(book_id):
         location = books.get_book_cover(conn, book_id)
     if location is None:
         abort(404)
-    return send_from_directory(os.environ["MEDIA_DIR"], location)
+    stored_object = storage.get_object(location)
+    if stored_object is None:
+        abort(404)
+
+    body = stored_object["Body"]
+    response = Response(
+        body.iter_chunks(chunk_size=64 * 1024),
+        content_type=(
+            stored_object.get("ContentType")
+            or COVER_CONTENT_TYPES.get(os.path.splitext(location)[1].lower())
+            or "application/octet-stream"
+        ),
+    )
+    response.call_on_close(body.close)
+    if stored_object.get("ContentLength") is not None:
+        response.headers["Content-Length"] = str(stored_object["ContentLength"])
+    if stored_object.get("ETag"):
+        response.headers["ETag"] = stored_object["ETag"]
+    if stored_object.get("LastModified"):
+        response.headers["Last-Modified"] = http_date(stored_object["LastModified"])
+    response.headers["Accept-Ranges"] = "bytes"
+    return response
 
 
 @app.post("/auth/register")
@@ -156,10 +214,10 @@ def _slug(title):
     return re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-") or "book"
 
 
-def _stem(media_dir, title):
+def _stem(title):
     base = _slug(title)
     stem, n = base, 1
-    while glob.glob(os.path.join(media_dir, "books", stem + ".*")):
+    while storage.prefix_exists(f"books/{stem}."):
         n += 1
         stem = f"{base}-{n}"
     return stem
@@ -258,7 +316,12 @@ def add():
         cover_bytes = cover.read()
         try:
             ingest.validate_file(cover_bytes, "cover")
-            cover_ext = os.path.splitext(cover.filename)[1].lower() or ".jpg"
+            if cover_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+                cover_ext = ".png"
+            elif cover_bytes.startswith(b"RIFF"):
+                cover_ext = ".webp"
+            else:
+                cover_ext = ".jpg"
         except ValueError as e:
             return {"error": str(e)}, 400
     elif extracted_meta.get("cover_bytes"):
@@ -317,26 +380,21 @@ def add():
         or "https://creativecommons.org/"
     )
 
-    media_dir = os.environ["MEDIA_DIR"]
-    os.makedirs(os.path.join(media_dir, "books"), exist_ok=True)
-    os.makedirs(os.path.join(media_dir, "covers"), exist_ok=True)
-    stem = _stem(media_dir, title)
+    stem = _stem(title)
 
     # Save format files
     formats = {}
     for fmt, data in uploads.items():
         rel_path = f"books/{stem}.{fmt}"
-        full_path = os.path.join(media_dir, rel_path)
-        with open(full_path, "wb") as out:
-            out.write(data)
+        storage.put_object(rel_path, data, BOOK_CONTENT_TYPES[fmt])
         formats[fmt] = rel_path
 
     # Save cover image
     cover_ref = None
     if cover_bytes:
         cover_ref = f"covers/{stem}{cover_ext}"
-        with open(os.path.join(media_dir, cover_ref), "wb") as out:
-            out.write(cover_bytes)
+        content_type = COVER_CONTENT_TYPES.get(cover_ext, "application/octet-stream")
+        storage.put_object(cover_ref, cover_bytes, content_type)
 
     book = {
         "title": title,
