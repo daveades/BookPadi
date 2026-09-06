@@ -5,9 +5,10 @@ export default function AddBook({ onClose, onBookAdded }) {
   const [cover, setCover] = useState(null);
   const [inspecting, setInspecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
+  const [uploadedBookId, setUploadedBookId] = useState(null);
   const [error, setError] = useState(null);
 
-  // Form fields
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [topics, setTopics] = useState("");
@@ -35,7 +36,7 @@ export default function AddBook({ onClose, onBookAdded }) {
         method: "POST",
         body: formData,
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Failed to inspect file");
 
       if (data.title) setTitle(data.title);
@@ -59,19 +60,16 @@ export default function AddBook({ onClose, onBookAdded }) {
     }
   }
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
     if (!file) {
       setError("Please select a book file (.epub, .pdf, or .html)");
       return;
     }
 
-    setSubmitting(true);
-    setError(null);
-
     const formData = new FormData();
-    // Determine extension/format
-    const ext = file.name.split(".").pop().toLowerCase();
+    const selectedExtension = file.name.split(".").pop().toLowerCase();
+    const ext = selectedExtension === "htm" ? "html" : selectedExtension;
     formData.append(ext, file);
 
     if (cover) {
@@ -88,28 +86,75 @@ export default function AddBook({ onClose, onBookAdded }) {
     formData.append("license_name", licenseName || "Open Access");
     formData.append("license_url", licenseUrl || "https://creativecommons.org/");
 
-    try {
-      const res = await fetch("/books", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to add book");
+    setSubmitting(true);
+    setUploadProgress(0);
+    setError(null);
 
-      onBookAdded(data.id);
-    } catch (err) {
-      setError(err.message);
-    } finally {
+    const request = new XMLHttpRequest();
+    request.open("POST", "/books");
+    request.responseType = "json";
+
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        setUploadProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+
+    request.onload = () => {
       setSubmitting(false);
-    }
+      const data = request.response || {};
+      if (request.status >= 200 && request.status < 300) {
+        setUploadProgress(100);
+        setUploadedBookId(data.id);
+        return;
+      }
+      setUploadProgress(null);
+      setError(data.error || `Upload failed (${request.status})`);
+    };
+
+    request.onerror = () => {
+      setSubmitting(false);
+      setUploadProgress(null);
+      setError("The upload could not reach the server. Check your connection and try again.");
+    };
+
+    request.send(formData);
+  }
+
+  if (uploadedBookId) {
+    return (
+      <div className="modal-backdrop" role="dialog" aria-modal="true">
+        <div className="modal modal--confirmation">
+          <p className="upload-confirmation__mark" aria-hidden="true">✓</p>
+          <h2 className="modal__title">Book uploaded</h2>
+          <p className="upload-confirmation__text">
+            <strong>{title}</strong> is now in the BookPadi library.
+          </p>
+          <button type="button" className="btn" onClick={() => onBookAdded(uploadedBookId)}>
+            View book
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+    <div
+      className="modal-backdrop"
+      onClick={submitting ? undefined : onClose}
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal__head">
           <h2 className="modal__title">Add / Import Book</h2>
-          <button type="button" className="text-btn modal__close" onClick={onClose} aria-label="Close">
+          <button
+            type="button"
+            className="text-btn modal__close"
+            onClick={onClose}
+            aria-label="Close"
+            disabled={submitting}
+          >
             ✕
           </button>
         </div>
@@ -136,7 +181,20 @@ export default function AddBook({ onClose, onBookAdded }) {
           </div>
 
           {inspecting && <p className="status">Extracting metadata from file...</p>}
-          {error && <p className="auth__error">{error}</p>}
+          {submitting && (
+            <div className="upload-progress" aria-live="polite">
+              <div className="upload-progress__row">
+                <span>{uploadProgress === 100 ? "Finishing upload..." : "Uploading book..."}</span>
+                {uploadProgress !== null && <span>{uploadProgress}%</span>}
+              </div>
+              <progress
+                className="upload-progress__bar"
+                value={uploadProgress ?? undefined}
+                max="100"
+              />
+            </div>
+          )}
+          {error && <p className="auth__error" role="alert">{error}</p>}
 
           <div className="form-grid">
             <label className="field">

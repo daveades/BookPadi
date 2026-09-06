@@ -863,6 +863,60 @@ textarea:focus-visible {
   border-top: 1px solid var(--rule);
 }
 
+.modal--confirmation {
+  max-width: 28rem;
+  text-align: center;
+}
+
+.upload-confirmation__mark {
+  font-size: 2rem;
+  line-height: 1;
+  margin: 0 0 1rem;
+}
+
+.upload-confirmation__text {
+  color: var(--muted);
+  margin: 0.75rem 0 1.5rem;
+}
+
+.upload-confirmation__text strong {
+  color: var(--ink);
+}
+
+.upload-progress {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.upload-progress__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.upload-progress__bar {
+  display: block;
+  width: 100%;
+  height: 0.4rem;
+  border: 0;
+  border-radius: 0;
+  background: var(--soft);
+  accent-color: var(--ink);
+}
+
+.upload-progress__bar::-webkit-progress-bar {
+  background: var(--soft);
+}
+
+.upload-progress__bar::-webkit-progress-value {
+  background: var(--ink);
+}
+
+.upload-progress__bar::-moz-progress-bar {
+  background: var(--ink);
+}
+
 .dropzone {
   border: 2px dashed var(--rule);
   padding: 1.5rem;
