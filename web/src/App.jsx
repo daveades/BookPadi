@@ -7,7 +7,9 @@ import BookList from "./BookList";
 import ContinueReading from "./ContinueReading";
 import Library from "./Library";
 import Read from "./Read";
+import ReviewSubmission from "./ReviewSubmission";
 import Search from "./Search";
+import Submissions from "./Submissions";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -24,6 +26,7 @@ export default function App() {
   const navigate = useNavigate();
   const bookMatch = useMatch("/books/:bookId");
   const readerMatch = useMatch("/books/:bookId/read/:format");
+  const reviewMatch = useMatch("/submissions/:bookId/review");
   const mode =
     location.pathname === "/"
       ? "browse"
@@ -31,7 +34,9 @@ export default function App() {
         ? "library"
         : location.pathname === "/search"
           ? "search"
-          : null;
+          : location.pathname === "/submissions"
+            ? "submissions"
+            : null;
 
   useEffect(() => {
     fetch("/auth/me")
@@ -146,10 +151,16 @@ export default function App() {
                 readFormat={format}
                 onBack={() => {
                   setBookSession((number) => number + 1);
-                  navigate("/books/" + encodeURIComponent(bookId), {
-                    replace: true,
-                    state: { from: location.state?.from || "/" },
-                  });
+                  if (location.state?.review) {
+                    navigate("/submissions/" + encodeURIComponent(bookId) + "/review", {
+                      replace: true,
+                    });
+                  } else {
+                    navigate("/books/" + encodeURIComponent(bookId), {
+                      replace: true,
+                      state: { from: location.state?.from || "/" },
+                    });
+                  }
                 }}
               />
             ) : (
@@ -231,6 +242,13 @@ export default function App() {
           >
             Search
           </button>
+          <button
+            className={mode === "submissions" ? "mode mode--on" : "mode"}
+            onClick={() => show("submissions")}
+            aria-pressed={mode === "submissions"}
+          >
+            {user.is_admin ? "Review" : "Submissions"}
+          </button>
         </nav>
       )}
 
@@ -290,6 +308,35 @@ export default function App() {
             />
           }
         />
+        <Route
+          path="/submissions"
+          element={
+            <Submissions
+              isAdmin={user.is_admin}
+              onReview={(id) => navigate("/submissions/" + encodeURIComponent(id) + "/review")}
+            />
+          }
+        />
+        <Route
+          path="/submissions/:bookId/review"
+          element={
+            user.is_admin ? (
+              <ReviewSubmission
+                bookId={reviewMatch?.params.bookId}
+                onBack={() => navigate("/submissions")}
+                onRead={(format) =>
+                  navigate(
+                    "/books/" + encodeURIComponent(reviewMatch.params.bookId) + "/read/" + format,
+                    { state: { review: true } },
+                  )
+                }
+                onReviewed={() => navigate("/submissions", { replace: true })}
+              />
+            ) : (
+              <Navigate to="/submissions" replace />
+            )
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
@@ -298,9 +345,7 @@ export default function App() {
           onClose={() => setAddingBook(false)}
           onBookAdded={(newId) => {
             setAddingBook(false);
-            load("/books");
-            loadHistory();
-            navigate("/books/" + encodeURIComponent(newId), { state: { from: "/" } });
+            navigate("/submissions", { state: { submitted: newId } });
           }}
         />
       )}

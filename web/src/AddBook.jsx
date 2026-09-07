@@ -126,12 +126,12 @@ export default function AddBook({ onClose, onBookAdded }) {
       <div className="modal-backdrop" role="dialog" aria-modal="true">
         <div className="modal modal--confirmation">
           <p className="upload-confirmation__mark" aria-hidden="true">✓</p>
-          <h2 className="modal__title">Book uploaded</h2>
+          <h2 className="modal__title">Submitted for review</h2>
           <p className="upload-confirmation__text">
-            <strong>{title}</strong> is now in the BookPadi library.
+            <strong>{title}</strong> will appear in the library after an administrator approves it.
           </p>
           <button type="button" className="btn" onClick={() => onBookAdded(uploadedBookId)}>
-            View book
+            View submission
           </button>
         </div>
       </div>

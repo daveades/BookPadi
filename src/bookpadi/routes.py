@@ -33,6 +33,45 @@ def user_is_admin(user):
     return bool(user and admin_email and user["email"].lower() == admin_email)
 
 
+def can_access_book(user, book):
+    return book and (book["moderation_status"] == "approved" or user_is_admin(user))
+
+
+@app.get("/submissions")
+def submissions():
+    user_id = current_user_id()
+    if user_id is None:
+        return {"error": "not signed in"}, 401
+    with db.connect() as conn:
+        user = users.get_by_id(conn, user_id)
+        return books.list_submissions(conn, user_id, user_is_admin(user))
+
+
+@app.patch("/submissions/<int:book_id>")
+def moderate_submission(book_id):
+    user_id = current_user_id()
+    if user_id is None:
+        return {"error": "not signed in"}, 401
+    data = request.get_json(silent=True) or {}
+    with db.connect() as conn:
+        user = users.get_by_id(conn, user_id)
+        if not user_is_admin(user):
+            return {"error": "administrator access required"}, 403
+        try:
+            reviewed = books.review_submission(
+                conn,
+                book_id,
+                data.get("status", ""),
+                data.get("review_note", ""),
+                data,
+            )
+        except ValueError as e:
+            return {"error": str(e)}, 400
+    if not reviewed:
+        return {"error": "pending submission not found"}, 404
+    return {"ok": True}
+
+
 @app.get("/books")
 def browse():
     with db.connect() as conn:
@@ -49,10 +88,12 @@ def search():
 def details(book_id):
     with db.connect() as conn:
         book = books.get_book(conn, book_id)
-    if book is None:
+        user_id = current_user_id()
+        user = users.get_by_id(conn, user_id) if user_id is not None else None
+    if not can_access_book(user, book):
         abort(404)
     book = dict(book)
-    user_id = current_user_id()
+    book.pop("submitted_by", None)
     if user_id is not None:
         with db.connect() as conn:
             saved = progress.get_progress(conn, user_id, book_id)
@@ -84,6 +125,11 @@ def delete_book(book_id):
 @app.get("/books/<int:book_id>/read")
 def read(book_id):
     with db.connect() as conn:
+        book = books.get_book(conn, book_id)
+        user_id = current_user_id()
+        user = users.get_by_id(conn, user_id) if user_id is not None else None
+        if not can_access_book(user, book):
+            abort(404)
         location = books.get_book_file(conn, book_id, request.args.get("format"))
 
     if location is None:
@@ -121,6 +167,11 @@ def read(book_id):
 @app.get("/books/<int:book_id>/cover")
 def cover(book_id):
     with db.connect() as conn:
+        book = books.get_book(conn, book_id)
+        user_id = current_user_id()
+        user = users.get_by_id(conn, user_id) if user_id is not None else None
+        if not can_access_book(user, book):
+            abort(404)
         location = books.get_book_cover(conn, book_id)
     if location is None:
         abort(404)
@@ -435,10 +486,15 @@ def add():
         "topics": topics,
         "formats": formats,
         "license": {"name": license_name, "url": license_url},
+        "moderation_status": "pending",
+        "submitted_by": current_user_id(),
     }
 
     try:
         with db.connect() as conn:
-            return {"id": books.create_book(conn, book)}, 201
+            return {
+                "id": books.create_book(conn, book),
+                "moderation_status": "pending",
+            }, 201
     except (ValueError, KeyError) as e:
         return {"error": str(e)}, 400

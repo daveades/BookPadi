@@ -1,5 +1,6 @@
 -- BookPadi MVP schema.
 
+drop table if exists book_progress cascade;
 drop table if exists book_format cascade;
 drop table if exists book_topic cascade;
 drop table if exists book_author cascade;
@@ -8,6 +9,14 @@ drop table if exists license cascade;
 drop table if exists author cascade;
 drop table if exists topic cascade;
 drop table if exists format cascade;
+drop table if exists user_account cascade;
+
+create table user_account (
+    id            bigint generated always as identity primary key,
+    email         text not null unique,
+    password_hash text not null,
+    created_at    timestamptz not null default now()
+);
 
 create table license (
     id          bigint generated always as identity primary key,
@@ -47,10 +56,18 @@ create table books (
     publisher   text,
     edition     text,
     cover_ref   text,
-    license_id  bigint not null references license (id) on delete restrict
+    license_id  bigint not null references license (id) on delete restrict,
+    moderation_status text not null default 'pending'
+        check (moderation_status in ('pending', 'approved', 'rejected')),
+    submitted_by bigint references user_account (id) on delete set null,
+    submitted_at timestamptz not null default now(),
+    review_note text,
+    reviewed_at timestamptz,
+    check (moderation_status <> 'rejected' or coalesce(btrim(review_note), '') <> '')
 );
 
 create index on books (license_id);
+create index on books (submitted_by);
 
 create table book_author (
     book_id   bigint not null references books (id) on delete cascade,
@@ -77,13 +94,6 @@ create table book_format (
 );
 
 create index on book_format (format_id);
-
-create table user_account (
-    id            bigint generated always as identity primary key,
-    email         text not null unique,
-    password_hash text not null,
-    created_at    timestamptz not null default now()
-);
 
 create table book_progress (
     user_id    bigint not null references user_account (id) on delete cascade,

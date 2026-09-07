@@ -38,9 +38,9 @@ def get_user_history(conn, user_id):
             join books b on b.id = bp.book_id
             join book_author ba on ba.book_id = b.id
             join author a on a.id = ba.author_id
-            left join book_format bf on bf.book_id = b.id
-            left join format f on f.id = bf.format_id
-            where bp.user_id = %s
+            join book_format bf on bf.book_id = b.id
+            join format f on f.id = bf.format_id
+            where bp.user_id = %s and b.moderation_status = 'approved'
             group by b.id, bp.position, bp.format, bp.updated_at
             order by bp.updated_at desc
             """,
@@ -54,4 +54,3 @@ def get_user_history(conn, user_id):
             }
             for row in rows
         ]
-
