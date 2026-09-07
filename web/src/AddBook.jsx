@@ -126,9 +126,9 @@ export default function AddBook({ onClose, onBookAdded }) {
       <div className="modal-backdrop" role="dialog" aria-modal="true">
         <div className="modal modal--confirmation">
           <p className="upload-confirmation__mark" aria-hidden="true">✓</p>
-          <h2 className="modal__title">Submitted for review</h2>
+          <h2 className="modal__title">Submission received</h2>
           <p className="upload-confirmation__text">
-            <strong>{title}</strong> will appear in the library after an administrator approves it.
+            Your book has been submitted for review. We’ll let you know if it has been accepted.
           </p>
           <button type="button" className="btn" onClick={() => onBookAdded(uploadedBookId)}>
             View submission
@@ -147,7 +147,7 @@ export default function AddBook({ onClose, onBookAdded }) {
     >
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal__head">
-          <h2 className="modal__title">Add / Import Book</h2>
+          <h2 className="modal__title">Submit a book</h2>
           <button
             type="button"
             className="text-btn modal__close"
@@ -314,7 +314,7 @@ export default function AddBook({ onClose, onBookAdded }) {
               Cancel
             </button>
             <button type="submit" className="btn" disabled={!file || submitting || inspecting}>
-              {submitting ? "Importing book..." : "Import Book"}
+              {submitting ? "Submitting..." : "Submit"}
             </button>
           </div>
         </form>

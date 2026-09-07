@@ -211,7 +211,7 @@ export default function App() {
             className="text-btn text-btn--strong"
             onClick={() => setAddingBook(true)}
           >
-            + Add book
+            Submit a book
           </button>
           <button type="button" className="text-btn" onClick={signOut}>
             Sign out
