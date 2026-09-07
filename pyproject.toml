@@ -13,6 +13,7 @@ dependencies = [
     "flask>=3",
     "psycopg[binary]>=3",
     "pypdf>=6",
+    "sentence-transformers>=5",
     "gunicorn>=23",
 ]
 
