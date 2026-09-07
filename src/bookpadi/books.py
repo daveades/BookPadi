@@ -143,11 +143,13 @@ def review_submission(conn, book_id, status, review_note, metadata):
             update books
                set title = %s, description = %s, language = %s, pub_year = %s,
                    publisher = %s, license_id = %s, moderation_status = %s,
-                   review_note = %s, reviewed_at = now()
+                   review_note = %s, reviewed_at = now(),
+                   index_status = case when %s = 'approved' then 'pending' else 'unindexed' end,
+                   index_error = null, index_version = null, indexed_at = null
              where id = %s
         """, (
             title, description, language, pub_year, publisher, license_id,
-            status, review_note or None, book_id,
+            status, review_note or None, status, book_id,
         ))
         return True
 
