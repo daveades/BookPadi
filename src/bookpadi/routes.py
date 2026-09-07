@@ -2,10 +2,10 @@ import os
 import re
 
 import psycopg
-from flask import Flask, Response, abort, request, session
+from flask import Flask, Response, abort, jsonify, request, session
 from werkzeug.http import http_date
 
-from bookpadi import books, db, ingest, progress, storage, users
+from bookpadi import books, db, ingest, progress, rate_limits, storage, users
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-secret-key")
@@ -22,6 +22,13 @@ COVER_CONTENT_TYPES = {
     ".png": "image/png",
     ".webp": "image/webp",
 }
+
+
+def rate_limit_response(retry_after):
+    response = jsonify({"error": f"too many attempts; try again in {retry_after} seconds"})
+    response.status_code = 429
+    response.headers["Retry-After"] = str(retry_after)
+    return response
 
 
 def current_user_id():
@@ -203,6 +210,10 @@ def cover(book_id):
 def register():
     email = request.json.get("email", "") if request.is_json else ""
     password = request.json.get("password", "") if request.is_json else ""
+    with db.connect() as conn:
+        retry_after = rate_limits.consume(conn, "register", email.strip().lower(), 5, 60 * 60)
+    if retry_after is not None:
+        return rate_limit_response(retry_after)
     try:
         with db.connect() as conn:
             user_id = users.register(conn, email, password)
@@ -218,6 +229,10 @@ def register():
 def login():
     email = request.json.get("email", "") if request.is_json else ""
     password = request.json.get("password", "") if request.is_json else ""
+    with db.connect() as conn:
+        retry_after = rate_limits.consume(conn, "login", email.strip().lower(), 10, 15 * 60)
+    if retry_after is not None:
+        return rate_limit_response(retry_after)
     if not email or not password:
         return {"error": "email and password are required"}, 400
     with db.connect() as conn:
@@ -307,8 +322,13 @@ def _lines(raw):
 
 @app.post("/books/inspect")
 def inspect():
-    if current_user_id() is None:
+    user_id = current_user_id()
+    if user_id is None:
         return {"error": "not signed in"}, 401
+    with db.connect() as conn:
+        retry_after = rate_limits.consume(conn, "inspect", user_id, 10, 60 * 60)
+    if retry_after is not None:
+        return rate_limit_response(retry_after)
 
     file = None
     format_name = None
@@ -357,8 +377,13 @@ def inspect():
 
 @app.post("/books")
 def add():
-    if current_user_id() is None:
+    user_id = current_user_id()
+    if user_id is None:
         return {"error": "not signed in"}, 401
+    with db.connect() as conn:
+        retry_after = rate_limits.consume(conn, "submit", user_id, 5, 24 * 60 * 60)
+    if retry_after is not None:
+        return rate_limit_response(retry_after)
 
     form = request.form
     uploads = {}
@@ -487,7 +512,7 @@ def add():
         "formats": formats,
         "license": {"name": license_name, "url": license_url},
         "moderation_status": "pending",
-        "submitted_by": current_user_id(),
+        "submitted_by": user_id,
     }
 
     try:

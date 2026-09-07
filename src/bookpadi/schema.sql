@@ -1,5 +1,6 @@
 -- BookPadi MVP schema.
 
+drop table if exists rate_limit cascade;
 drop table if exists book_progress cascade;
 drop table if exists book_format cascade;
 drop table if exists book_topic cascade;
@@ -16,6 +17,14 @@ create table user_account (
     email         text not null unique,
     password_hash text not null,
     created_at    timestamptz not null default now()
+);
+
+create table rate_limit (
+    scope             text not null,
+    identity_hash     text not null,
+    window_started_at timestamptz not null default now(),
+    request_count     int not null default 0 check (request_count >= 0),
+    primary key (scope, identity_hash)
 );
 
 create table license (
