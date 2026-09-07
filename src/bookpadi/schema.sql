@@ -1,6 +1,9 @@
 -- BookPadi MVP schema.
 
+create extension if not exists vector;
+
 drop table if exists rate_limit cascade;
+drop table if exists book_chunk cascade;
 drop table if exists book_progress cascade;
 drop table if exists book_format cascade;
 drop table if exists book_topic cascade;
@@ -72,11 +75,19 @@ create table books (
     submitted_at timestamptz not null default now(),
     review_note text,
     reviewed_at timestamptz,
+    index_status text not null default 'unindexed'
+        check (index_status in ('unindexed', 'pending', 'processing', 'indexed', 'failed')),
+    index_error text,
+    index_version integer check (index_version is null or index_version > 0),
+    indexed_at timestamptz,
     check (moderation_status <> 'rejected' or coalesce(btrim(review_note), '') <> '')
 );
 
 create index on books (license_id);
 create index on books (submitted_by);
+create index books_pending_index_idx
+    on books (submitted_at, id)
+    where moderation_status = 'approved' and index_status = 'pending';
 
 create table book_author (
     book_id   bigint not null references books (id) on delete cascade,
@@ -103,6 +114,27 @@ create table book_format (
 );
 
 create index on book_format (format_id);
+
+create table book_chunk (
+    id            bigint generated always as identity primary key,
+    book_id       bigint not null,
+    format_id     bigint not null,
+    section_order integer not null check (section_order >= 0),
+    chunk_order   integer not null check (chunk_order >= 0),
+    section_title text,
+    locator       jsonb not null check (jsonb_typeof(locator) = 'object'),
+    content       text not null check (btrim(content) <> ''),
+    search_vector tsvector generated always as
+        (to_tsvector('english'::regconfig, content)) stored,
+    embedding     vector(384) not null,
+    model_version text not null check (btrim(model_version) <> ''),
+    foreign key (book_id, format_id)
+        references book_format (book_id, format_id) on delete cascade,
+    unique (book_id, format_id, section_order, chunk_order)
+);
+
+create index book_chunk_book_idx on book_chunk (book_id);
+create index book_chunk_search_vector_idx on book_chunk using gin (search_vector);
 
 create table book_progress (
     user_id    bigint not null references user_account (id) on delete cascade,
