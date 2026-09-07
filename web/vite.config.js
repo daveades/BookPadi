@@ -9,6 +9,7 @@ export default defineConfig({
       "/library": "http://localhost:8000",
       "/search": "http://localhost:8000",
       "/auth": "http://localhost:8000",
+      "/submissions": "http://localhost:8000",
     },
   },
 });

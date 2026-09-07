@@ -28,6 +28,8 @@ export const config: VercelConfig = {
     routes.rewrite("/books/:path*", `${apiOrigin}/books/:path*`),
     routes.rewrite("/search", `${apiOrigin}/search`),
     routes.rewrite("/library", `${apiOrigin}/library`),
+    routes.rewrite("/submissions", `${apiOrigin}/submissions`),
+    routes.rewrite("/submissions/:path*", `${apiOrigin}/submissions/:path*`),
     routes.rewrite("/:path*", "/index.html"),
   ],
 };

@@ -2,19 +2,22 @@ import { useEffect, useState } from "react";
 
 export default function Submissions({ isAdmin, onReview }) {
   const [submissions, setSubmissions] = useState(null);
-  const [failed, setFailed] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetch("/submissions")
-      .then((response) => {
-        if (!response.ok) throw new Error(response.status);
-        return response.json();
+      .then(async (response) => {
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(data?.error || `Request failed (${response.status})`);
+        }
+        return data;
       })
       .then(setSubmissions)
-      .catch(() => setFailed(true));
+      .catch((requestError) => setError(requestError.message));
   }, []);
 
-  if (failed) return <p className="status">Could not load submissions.</p>;
+  if (error) return <p className="auth__error" role="alert">Could not load submissions: {error}</p>;
   if (submissions === null) return <p className="status">Loading submissions...</p>;
 
   return (
