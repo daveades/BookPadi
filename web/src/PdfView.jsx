@@ -6,7 +6,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 const PAGE_WIDTH = 720;
 
-export default function PdfView({ bookId, onBack }) {
+export default function PdfView({ bookId, initialPage, onBack }) {
   const hostRef = useRef(null);
   const pdfRef = useRef(null);
   const pagesRef = useRef([]);
@@ -152,20 +152,32 @@ export default function PdfView({ bookId, onBack }) {
 
         intervalTimer = setInterval(flush, 2000);
 
-        fetch("/books/" + bookId + "/progress")
-          .then((x) => x.json())
-          .then((data) => {
-            if (stopped) return;
-            if (data && data.position != null) {
-              const pg = Number(data.position);
-              if (pg >= 1 && pg <= pdf.numPages)
-                restoreTimer = setTimeout(() => {
-                  goTo(pg);
-                  renderPage(pg);
-                }, 100);
-            }
-          })
-          .catch(() => {});
+        const requestedPage = Number(initialPage);
+        if (
+          Number.isInteger(requestedPage) &&
+          requestedPage >= 1 &&
+          requestedPage <= pdf.numPages
+        ) {
+          restoreTimer = setTimeout(() => {
+            goTo(requestedPage);
+            renderPage(requestedPage);
+          }, 100);
+        } else {
+          fetch("/books/" + bookId + "/progress")
+            .then((x) => x.json())
+            .then((data) => {
+              if (stopped) return;
+              if (data && data.position != null) {
+                const pg = Number(data.position);
+                if (pg >= 1 && pg <= pdf.numPages)
+                  restoreTimer = setTimeout(() => {
+                    goTo(pg);
+                    renderPage(pg);
+                  }, 100);
+              }
+            })
+            .catch(() => {});
+        }
       } catch (err) {
         console.error("Failed to open PDF:", err);
         if (!stopped) setFailed(true);
@@ -195,7 +207,7 @@ export default function PdfView({ bookId, onBack }) {
       currentRef.current = 1;
       if (pdf) pdf.destroy().catch(() => {});
     };
-  }, [bookId, renderPage, goTo]);
+  }, [bookId, initialPage, renderPage, goTo]);
 
   if (failed) {
     return (

@@ -2,11 +2,20 @@ import { useEffect, useRef, useState } from "react";
 import ePub from "epubjs";
 import PdfView from "./PdfView";
 
-export default function Read({ bookId, epub, readFormat, onBack }) {
+export default function Read({ bookId, epub, readFormat, initialLocator, onBack }) {
   const epubHost = useRef(null);
   const frameRef = useRef(null);
   const rendition = useRef(null);
   const [failed, setFailed] = useState(false);
+  const epubHref = typeof initialLocator?.href === "string" ? initialLocator.href : null;
+  const epubAnchor = typeof initialLocator?.anchor === "string" ? initialLocator.anchor : null;
+  const epubTarget = epubHref
+    ? epubHref + (epubAnchor ? "#" + encodeURIComponent(epubAnchor) : "")
+    : null;
+  const htmlAnchor =
+    readFormat === "html" && typeof initialLocator?.anchor === "string"
+      ? initialLocator.anchor
+      : null;
 
   useEffect(() => {
     if (!epub) return;
@@ -45,10 +54,13 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
         }
         rendition.current = r;
 
-        const saved = await fetch("/books/" + bookId + "/progress")
-          .then((x) => x.json())
-          .catch(() => ({}));
-        const start = saved && saved.position;
+        let start = epubTarget;
+        if (!start) {
+          const saved = await fetch("/books/" + bookId + "/progress")
+            .then((x) => x.json())
+            .catch(() => ({}));
+          start = saved && saved.position;
+        }
 
         await r.display(start || undefined);
 
@@ -74,7 +86,7 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
       flush();
       if (r) r.destroy();
     };
-  }, [bookId, epub]);
+  }, [bookId, epub, epubTarget]);
 
   useEffect(() => {
     if (epub || readFormat !== "html") return;
@@ -131,11 +143,17 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
     }
 
     function restore() {
-      if (!frame || !frame.contentWindow || saved == null) return;
+      if (!frame || !frame.contentWindow) return;
       try {
         const win = frame.contentWindow;
         const documentEl = doc();
         if (!documentEl) return;
+        if (htmlAnchor) {
+          const section = documentEl.getElementById(htmlAnchor);
+          if (section) win.scrollTo(0, section.offsetTop);
+          return;
+        }
+        if (saved == null) return;
         if (typeof saved === "string" && saved.includes(":")) {
           const i = saved.indexOf(":");
           const section = documentEl.getElementById(saved.slice(0, i));
@@ -150,15 +168,17 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
       }
     }
 
-    fetch("/books/" + bookId + "/progress")
-      .then((x) => x.json())
-      .then((data) => {
-        if (data && data.position != null) {
-          saved = data.position;
-          if (saved !== "") restore();
-        }
-      })
-      .catch(() => {});
+    if (!htmlAnchor) {
+      fetch("/books/" + bookId + "/progress")
+        .then((x) => x.json())
+        .then((data) => {
+          if (data && data.position != null) {
+            saved = data.position;
+            if (saved !== "") restore();
+          }
+        })
+        .catch(() => {});
+    }
 
     const frameWin = frame && frame.contentWindow;
     const frameDoc = frame && frame.contentDocument;
@@ -184,7 +204,7 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
         frameDoc.removeEventListener("scroll", onChange, true);
       }
     };
-  }, [bookId, epub, readFormat]);
+  }, [bookId, epub, readFormat, htmlAnchor]);
 
   if (epub) {
     return (
@@ -218,7 +238,7 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
   }
 
   if (readFormat === "pdf") {
-    return <PdfView bookId={bookId} onBack={onBack} />;
+    return <PdfView bookId={bookId} initialPage={initialLocator?.page_start} onBack={onBack} />;
   }
 
   return (
@@ -231,7 +251,12 @@ export default function Read({ bookId, epub, readFormat, onBack }) {
       <iframe
         ref={frameRef}
         className="reader__frame"
-        src={"/books/" + bookId + "/read"}
+        src={
+          "/books/" +
+          bookId +
+          "/read?format=html" +
+          (htmlAnchor ? "#" + encodeURIComponent(htmlAnchor) : "")
+        }
         title="Book"
       />
     </div>

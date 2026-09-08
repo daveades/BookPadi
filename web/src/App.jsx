@@ -9,6 +9,7 @@ import Library from "./Library";
 import Read from "./Read";
 import ReviewSubmission from "./ReviewSubmission";
 import Search from "./Search";
+import SearchResults from "./SearchResults";
 import Submissions from "./Submissions";
 
 export default function App() {
@@ -104,6 +105,19 @@ export default function App() {
     navigate("/books/" + encodeURIComponent(id), { state: { from: sourceRoute() } });
   }
 
+  function openSearchMatch(bookId, match) {
+    navigate(
+      "/books/" + encodeURIComponent(bookId) + "/read/" + encodeURIComponent(match.format),
+      {
+        state: {
+          from: "/search",
+          searchResult: true,
+          locator: match.locator,
+        },
+      },
+    );
+  }
+
   function resumeBook(book) {
     const isEpub =
       book.progress_format === "epub" ||
@@ -149,12 +163,15 @@ export default function App() {
                 bookId={bookId}
                 epub={format === "epub"}
                 readFormat={format}
+                initialLocator={location.state?.locator}
                 onBack={() => {
                   setBookSession((number) => number + 1);
                   if (location.state?.review) {
                     navigate("/submissions/" + encodeURIComponent(bookId) + "/review", {
                       replace: true,
                     });
+                  } else if (location.state?.searchResult) {
+                    navigate(location.state.from || "/search", { replace: true });
                   } else {
                     navigate("/books/" + encodeURIComponent(bookId), {
                       replace: true,
@@ -174,10 +191,22 @@ export default function App() {
 
   const waiting = mode === "search" && !query;
   const results = (
-    <>
+    <section
+      className="results"
+      aria-live="polite"
+      aria-busy={books === null && !waiting && !failed}
+    >
       {waiting && <p className="status">Search for a title, an author or a topic.</p>}
-      {!waiting && failed && <p className="status">The library did not answer.</p>}
-      {!waiting && !failed && books === null && <p className="status">Loading.</p>}
+      {!waiting && failed && (
+        <p className="status">
+          {mode === "search"
+            ? "Search could not be completed. Try again."
+            : "The library did not answer."}
+        </p>
+      )}
+      {!waiting && !failed && books === null && (
+        <p className="status">{mode === "search" ? "Searching..." : "Loading."}</p>
+      )}
       {!waiting && !failed && books !== null && books.length === 0 && (
         <p className="status">
           {mode === "search" ? `Nothing matches ${query}.` : "There are no books yet."}
@@ -192,10 +221,19 @@ export default function App() {
               {books.length} {books.length === 1 ? "book" : "books"} for {query}
             </p>
           )}
-          <BookList books={books} onSelect={openBook} />
+          {mode === "search" ? (
+            <SearchResults
+              books={books}
+              query={query}
+              onSelectBook={openBook}
+              onSelectMatch={openSearchMatch}
+            />
+          ) : (
+            <BookList books={books} onSelect={openBook} />
+          )}
         </>
       )}
-    </>
+    </section>
   );
 
   return (

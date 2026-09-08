@@ -83,6 +83,135 @@ textarea:focus-visible {
   padding: 0;
 }
 
+.search-results,
+.search-matches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.search-result {
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--rule);
+}
+
+.search-result:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.search-result__head {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.search-result__cover {
+  flex: none;
+  width: 3.75rem;
+  height: 5rem;
+  object-fit: cover;
+  background: var(--soft);
+}
+
+.search-result__cover--placeholder {
+  display: block;
+  border: 1px solid var(--rule);
+}
+
+.search-result__book {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-result__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+}
+
+.search-result__title button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.search-result__title button:hover {
+  text-decoration: underline;
+}
+
+.search-result__authors {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.search-matches {
+  margin: 1rem 0 0 4.75rem;
+}
+
+.search-match {
+  padding: 1rem 0;
+  border-top: 1px solid var(--rule);
+}
+
+.search-match__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.search-match__head h4 {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.search-match__location {
+  flex: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.search-match__excerpt {
+  margin: 0.45rem 0 0;
+  color: #3f3f45;
+  font-size: 0.875rem;
+}
+
+.search-match__excerpt mark {
+  padding: 0 0.08em;
+  background: #ffed9b;
+  color: inherit;
+}
+
+.search-match__open {
+  margin-top: 0.55rem;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+@media (max-width: 520px) {
+  .search-matches {
+    margin-left: 0;
+  }
+
+  .search-match__head {
+    display: block;
+  }
+
+  .search-match__location {
+    display: block;
+    margin-top: 0.2rem;
+  }
+}
+
 .book {
   padding: 0;
   border-top: 1px solid var(--rule);
