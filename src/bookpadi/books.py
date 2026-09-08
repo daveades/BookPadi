@@ -6,6 +6,7 @@ SEARCH_BOOK_LIMIT = 25
 SEARCH_CANDIDATE_LIMIT = 100
 SEARCH_SECTION_LIMIT = 3
 SEARCH_EXCERPT_CHARACTERS = 360
+MIN_SEMANTIC_SCORE = 0.30
 METADATA_WEIGHT = 0.45
 LEXICAL_WEIGHT = 0.30
 SEMANTIC_WEIGHT = 0.25
@@ -318,7 +319,11 @@ def _semantic_matches(cur, query_embedding, model_version):
             "limit": SEARCH_CANDIDATE_LIMIT,
         },
     )
-    return cur.fetchall()
+    return [
+        row
+        for row in cur.fetchall()
+        if float(row["semantic_score"]) >= MIN_SEMANTIC_SCORE
+    ]
 
 
 def _book_result(results, row):
