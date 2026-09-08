@@ -7,6 +7,12 @@ SEARCH_CANDIDATE_LIMIT = 100
 SEARCH_SECTION_LIMIT = 3
 SEARCH_EXCERPT_CHARACTERS = 360
 MIN_SEMANTIC_SCORE = 0.30
+EXCLUDED_SEARCH_SECTION_TITLES = (
+    "contents",
+    "glossary",
+    "preface",
+    "table of contents",
+)
 METADATA_WEIGHT = 0.45
 LEXICAL_WEIGHT = 0.30
 SEMANTIC_WEIGHT = 0.25
@@ -283,11 +289,16 @@ def _lexical_matches(cur, query):
         cross join websearch_to_tsquery('english', %(query)s) as q(value)
         where b.moderation_status = 'approved'
           and b.index_status = 'indexed'
+          and coalesce(lower(btrim(bc.section_title)), '') <> all(%(excluded_titles)s)
           and bc.search_vector @@ q.value
         order by lexical_score desc, b.id, bc.section_order, bc.chunk_order
         limit %(limit)s
         """,
-        {"query": query, "limit": SEARCH_CANDIDATE_LIMIT},
+        {
+            "query": query,
+            "excluded_titles": list(EXCLUDED_SEARCH_SECTION_TITLES),
+            "limit": SEARCH_CANDIDATE_LIMIT,
+        },
     )
     return cur.fetchall()
 
@@ -309,6 +320,7 @@ def _semantic_matches(cur, query_embedding, model_version):
         where b.moderation_status = 'approved'
           and b.index_status = 'indexed'
           and bc.model_version = %(model_version)s
+          and coalesce(lower(btrim(bc.section_title)), '') <> all(%(excluded_titles)s)
         order by bc.embedding <=> %(embedding)s::vector,
                  b.id, bc.section_order, bc.chunk_order
         limit %(limit)s
@@ -316,6 +328,7 @@ def _semantic_matches(cur, query_embedding, model_version):
         {
             "embedding": json.dumps(query_embedding, separators=(",", ":")),
             "model_version": model_version,
+            "excluded_titles": list(EXCLUDED_SEARCH_SECTION_TITLES),
             "limit": SEARCH_CANDIDATE_LIMIT,
         },
     )
