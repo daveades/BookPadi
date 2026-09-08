@@ -1,4 +1,14 @@
+import json
+
+
 READABLE_FORMATS = ("epub", "pdf", "html")
+SEARCH_BOOK_LIMIT = 25
+SEARCH_CANDIDATE_LIMIT = 100
+SEARCH_SECTION_LIMIT = 3
+SEARCH_EXCERPT_CHARACTERS = 360
+METADATA_WEIGHT = 0.45
+LEXICAL_WEIGHT = 0.30
+SEMANTIC_WEIGHT = 0.25
 
 
 def list_submissions(conn, user_id, is_admin):
@@ -195,28 +205,217 @@ def get_book(conn, book_id):
         return cur.fetchone()
 
 
-def search_books(conn, q):
-    if not q.strip():
+def _metadata_matches(cur, query):
+    cur.execute(
+        """
+        select b.id, b.title, b.cover_ref,
+               (select array_agg(a.name order by a.name)
+                  from book_author ba join author a on a.id = ba.author_id
+                 where ba.book_id = b.id) as authors,
+               least(
+                   1.0,
+                   case when lower(b.title) = lower(%(query)s) then 1.0
+                        when b.title ilike %(like)s then 0.8 else 0 end
+                   + case when exists (
+                              select 1
+                              from book_author ba join author a on a.id = ba.author_id
+                              where ba.book_id = b.id and lower(a.name) = lower(%(query)s)
+                          ) then 0.8
+                          when exists (
+                              select 1
+                              from book_author ba join author a on a.id = ba.author_id
+                              where ba.book_id = b.id and a.name ilike %(like)s
+                          ) then 0.6 else 0 end
+                   + case when exists (
+                              select 1
+                              from book_topic bt join topic t on t.id = bt.topic_id
+                              where bt.book_id = b.id and lower(t.name) = lower(%(query)s)
+                          ) then 0.7
+                          when exists (
+                              select 1
+                              from book_topic bt join topic t on t.id = bt.topic_id
+                              where bt.book_id = b.id and t.name ilike %(like)s
+                          ) then 0.5 else 0 end
+                   + case when b.description ilike %(like)s then 0.3 else 0 end
+               )::double precision as metadata_score
+        from books b
+        where b.moderation_status = 'approved'
+          and (
+               b.title ilike %(like)s
+            or b.description ilike %(like)s
+            or exists (
+                select 1
+                from book_author ba join author a on a.id = ba.author_id
+                where ba.book_id = b.id and a.name ilike %(like)s
+            )
+            or exists (
+                select 1
+                from book_topic bt join topic t on t.id = bt.topic_id
+                where bt.book_id = b.id and t.name ilike %(like)s
+            )
+          )
+        order by metadata_score desc, b.title
+        limit %(limit)s
+        """,
+        {
+            "query": query,
+            "like": f"%{query}%",
+            "limit": SEARCH_CANDIDATE_LIMIT,
+        },
+    )
+    return cur.fetchall()
+
+
+def _lexical_matches(cur, query):
+    cur.execute(
+        """
+        select b.id, b.title, b.cover_ref,
+               (select array_agg(a.name order by a.name)
+                  from book_author ba join author a on a.id = ba.author_id
+                 where ba.book_id = b.id) as authors,
+               bc.section_order, bc.section_title, bc.locator, bc.content,
+               f.name as format,
+               ts_rank_cd(bc.search_vector, q.value, 32)::double precision as lexical_score
+        from book_chunk bc
+        join books b on b.id = bc.book_id
+        join format f on f.id = bc.format_id
+        cross join websearch_to_tsquery('english', %(query)s) as q(value)
+        where b.moderation_status = 'approved'
+          and b.index_status = 'indexed'
+          and bc.search_vector @@ q.value
+        order by lexical_score desc, b.id, bc.section_order, bc.chunk_order
+        limit %(limit)s
+        """,
+        {"query": query, "limit": SEARCH_CANDIDATE_LIMIT},
+    )
+    return cur.fetchall()
+
+
+def _semantic_matches(cur, query_embedding, model_version):
+    cur.execute(
+        """
+        select b.id, b.title, b.cover_ref,
+               (select array_agg(a.name order by a.name)
+                  from book_author ba join author a on a.id = ba.author_id
+                 where ba.book_id = b.id) as authors,
+               bc.section_order, bc.section_title, bc.locator, bc.content,
+               f.name as format,
+               greatest(0, 1 - (bc.embedding <=> %(embedding)s::vector))::double precision
+                   as semantic_score
+        from book_chunk bc
+        join books b on b.id = bc.book_id
+        join format f on f.id = bc.format_id
+        where b.moderation_status = 'approved'
+          and b.index_status = 'indexed'
+          and bc.model_version = %(model_version)s
+        order by bc.embedding <=> %(embedding)s::vector,
+                 b.id, bc.section_order, bc.chunk_order
+        limit %(limit)s
+        """,
+        {
+            "embedding": json.dumps(query_embedding, separators=(",", ":")),
+            "model_version": model_version,
+            "limit": SEARCH_CANDIDATE_LIMIT,
+        },
+    )
+    return cur.fetchall()
+
+
+def _book_result(results, row):
+    if row["id"] not in results:
+        results[row["id"]] = {
+            "id": row["id"],
+            "title": row["title"],
+            "cover_ref": row["cover_ref"],
+            "authors": row["authors"],
+            "metadata_score": 0.0,
+            "sections": {},
+        }
+    return results[row["id"]]
+
+
+def _add_section_match(result, row, score_name):
+    section = result["sections"].setdefault(
+        row["section_order"],
+        {
+            "section_title": row["section_title"],
+            "locator": row["locator"],
+            "format": row["format"],
+            "content": row["content"],
+            "lexical_score": 0.0,
+            "semantic_score": 0.0,
+        },
+    )
+    score = max(0.0, min(1.0, float(row[score_name])))
+    if score > section[score_name]:
+        section[score_name] = score
+        section["section_title"] = row["section_title"]
+        section["locator"] = row["locator"]
+        section["format"] = row["format"]
+        section["content"] = row["content"]
+
+
+def _excerpt(text):
+    text = " ".join(text.split())
+    if len(text) <= SEARCH_EXCERPT_CHARACTERS:
+        return text
+    shortened = text[: SEARCH_EXCERPT_CHARACTERS - 3].rsplit(" ", 1)[0]
+    return f"{shortened}..."
+
+
+def search_books(conn, q, query_embedding=None, model_version=None):
+    query = q.strip()
+    if not query:
         return []
     with conn.cursor() as cur:
-        cur.execute("""
-            select b.id, b.title, b.cover_ref, array_agg(a.name order by a.name) as authors
-            from books b
-            join book_author ba on ba.book_id = b.id
-            join author a on a.id = ba.author_id
-            where b.moderation_status = 'approved'
-              and (
-                   b.title ilike %(q)s
-                or b.description ilike %(q)s
-                or exists (select 1 from book_author ba2 join author a2 on a2.id = ba2.author_id
-                            where ba2.book_id = b.id and a2.name ilike %(q)s)
-                or exists (select 1 from book_topic bt2 join topic t2 on t2.id = bt2.topic_id
-                            where bt2.book_id = b.id and t2.name ilike %(q)s)
-              )
-            group by b.id
-            order by b.title
-        """, {"q": f"%{q}%"})
-        return cur.fetchall()
+        metadata_rows = _metadata_matches(cur, query)
+        lexical_rows = _lexical_matches(cur, query)
+        semantic_rows = (
+            _semantic_matches(cur, query_embedding, model_version)
+            if query_embedding is not None
+            else []
+        )
+
+    results = {}
+    for row in metadata_rows:
+        result = _book_result(results, row)
+        result["metadata_score"] = max(result["metadata_score"], float(row["metadata_score"]))
+    for row in lexical_rows:
+        _add_section_match(_book_result(results, row), row, "lexical_score")
+    for row in semantic_rows:
+        _add_section_match(_book_result(results, row), row, "semantic_score")
+
+    ranked = []
+    for result in results.values():
+        sections = list(result.pop("sections").values())
+        for section in sections:
+            section["score"] = (
+                LEXICAL_WEIGHT * section["lexical_score"]
+                + SEMANTIC_WEIGHT * section["semantic_score"]
+            )
+        sections.sort(key=lambda section: section["score"], reverse=True)
+        best_lexical = max((section["lexical_score"] for section in sections), default=0.0)
+        best_semantic = max((section["semantic_score"] for section in sections), default=0.0)
+        result["score"] = (
+            METADATA_WEIGHT * result.pop("metadata_score")
+            + LEXICAL_WEIGHT * best_lexical
+            + SEMANTIC_WEIGHT * best_semantic
+        )
+        result["matches"] = [
+            {
+                "section_title": section["section_title"],
+                "locator": section["locator"],
+                "format": section["format"],
+                "excerpt": _excerpt(section["content"]),
+            }
+            for section in sections[:SEARCH_SECTION_LIMIT]
+        ]
+        ranked.append(result)
+
+    ranked.sort(key=lambda result: (-result["score"], result["title"].lower()))
+    for result in ranked:
+        result.pop("score")
+    return ranked[:SEARCH_BOOK_LIMIT]
 
 
 def get_book_file(conn, book_id, fmt=None):

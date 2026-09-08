@@ -5,7 +5,7 @@ import psycopg
 from flask import Flask, Response, abort, jsonify, request, session
 from werkzeug.http import http_date
 
-from bookpadi import books, db, ingest, progress, rate_limits, storage, users
+from bookpadi import books, db, embedding_client, ingest, progress, rate_limits, storage, users
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-secret-key")
@@ -87,8 +87,20 @@ def browse():
 
 @app.get("/search")
 def search():
+    query = request.args.get("q", "")
+    query_embedding = None
+    if query.strip():
+        try:
+            query_embedding = embedding_client.embed_query(query)
+        except embedding_client.EmbeddingClientError:
+            pass
     with db.connect() as conn:
-        return books.search_books(conn, request.args.get("q", ""))
+        return books.search_books(
+            conn,
+            query,
+            query_embedding,
+            embedding_client.MODEL_NAME,
+        )
 
 
 @app.get("/books/<int:book_id>")

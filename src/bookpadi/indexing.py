@@ -1,20 +1,15 @@
 import argparse
 import json
-import math
-import os
-import urllib.request
 
 from psycopg.types.json import Jsonb
 
-from bookpadi import chunks, content, db, storage
+from bookpadi import chunks, content, db, embedding_client, storage
 
 INDEX_VERSION = 1
-MODEL_VERSION = "sentence-transformers/all-MiniLM-L6-v2"
-VECTOR_DIMENSIONS = 384
+MODEL_VERSION = embedding_client.MODEL_NAME
 READABLE_FORMATS = ("epub", "pdf", "html")
-EMBEDDING_BATCH_SIZE = 32
+EMBEDDING_BATCH_SIZE = embedding_client.MAX_BATCH_SIZE
 MAX_BOOK_BYTES = 100 * 1024 * 1024
-MAX_EMBEDDING_RESPONSE_BYTES = 2 * 1024 * 1024
 MAX_INDEX_ERROR_CHARACTERS = 2000
 
 
@@ -68,37 +63,9 @@ def download_book(location):
 
 def embed_chunks(book_chunks):
     vectors = []
-    endpoint = os.environ.get("EMBEDDING_URL", "http://127.0.0.1:8001").rstrip("/")
     for start in range(0, len(book_chunks), EMBEDDING_BATCH_SIZE):
         batch = book_chunks[start : start + EMBEDDING_BATCH_SIZE]
-        payload = json.dumps({"texts": [chunk["content"] for chunk in batch]}).encode("utf-8")
-        request = urllib.request.Request(
-            f"{endpoint}/embed/documents",
-            data=payload,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urllib.request.urlopen(request, timeout=120) as response:
-            response_data = response.read(MAX_EMBEDDING_RESPONSE_BYTES + 1)
-        if len(response_data) > MAX_EMBEDDING_RESPONSE_BYTES:
-            raise ValueError("The embedding service response exceeds the processing limit.")
-        result = json.loads(response_data)
-        batch_vectors = result.get("vectors") if isinstance(result, dict) else None
-        if not isinstance(result, dict) or result.get("model") != MODEL_VERSION or result.get("dimensions") != VECTOR_DIMENSIONS:
-            raise ValueError("The embedding service returned an incompatible model.")
-        if not isinstance(batch_vectors, list) or len(batch_vectors) != len(batch):
-            raise ValueError("The embedding service returned an unexpected number of vectors.")
-        for vector in batch_vectors:
-            if not isinstance(vector, list) or len(vector) != VECTOR_DIMENSIONS:
-                raise ValueError("The embedding service returned an invalid vector.")
-            if any(
-                not isinstance(value, (int, float))
-                or isinstance(value, bool)
-                or not math.isfinite(value)
-                for value in vector
-            ):
-                raise ValueError("The embedding service returned an invalid vector.")
-        vectors.extend(batch_vectors)
+        vectors.extend(embedding_client.embed_documents([chunk["content"] for chunk in batch]))
     return vectors
 
 
