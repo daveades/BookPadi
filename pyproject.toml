@@ -11,6 +11,7 @@ dependencies = [
     "beautifulsoup4>=4.12",
     "boto3>=1.35",
     "flask>=3",
+    "fonttools>=4",
     "psycopg[binary]>=3",
     "pypdf>=6",
     "sentence-transformers>=5",
