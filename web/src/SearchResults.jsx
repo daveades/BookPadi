@@ -1,17 +1,100 @@
+const SEARCH_STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "as",
+  "at",
+  "be",
+  "been",
+  "being",
+  "by",
+  "can",
+  "could",
+  "did",
+  "do",
+  "does",
+  "for",
+  "from",
+  "had",
+  "has",
+  "have",
+  "how",
+  "if",
+  "in",
+  "into",
+  "is",
+  "it",
+  "its",
+  "may",
+  "might",
+  "must",
+  "no",
+  "not",
+  "of",
+  "on",
+  "or",
+  "shall",
+  "should",
+  "that",
+  "the",
+  "their",
+  "them",
+  "then",
+  "there",
+  "these",
+  "they",
+  "this",
+  "those",
+  "to",
+  "was",
+  "were",
+  "what",
+  "when",
+  "where",
+  "which",
+  "who",
+  "why",
+  "will",
+  "with",
+  "would",
+  "you",
+  "your",
+]);
+
 function queryTerms(query) {
   return Array.from(new Set(query.match(/[\p{L}\p{N}]+/gu) || []))
-    .filter((term) => term.length > 1)
+    .filter((term) => term.length > 1 && !SEARCH_STOP_WORDS.has(term.toLocaleLowerCase()))
     .sort((first, second) => second.length - first.length);
 }
 
 function highlightExcerpt(excerpt, query) {
   const terms = queryTerms(query);
   if (terms.length === 0) return excerpt;
-  const escaped = terms.map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  const pattern = new RegExp(`(${escaped.join("|")})`, "giu");
-  const matches = new Set(terms.map((term) => term.toLocaleLowerCase()));
+  const escaped = terms.map((term) => {
+    const lower = term.toLocaleLowerCase();
+    if (/[^aeiou]ies$/u.test(lower)) {
+      return `${lower.slice(0, -3).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:y|ies)`;
+    }
+    if (/(?:ses|xes|zes|ches|shes)$/u.test(lower)) {
+      return `${lower.slice(0, -2).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:es)?`;
+    }
+    if (/s$/u.test(lower) && !/(?:ss|us|is)$/u.test(lower)) {
+      return `${lower.slice(0, -1).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}s?`;
+    }
+    if (/[^aeiou]y$/u.test(lower)) {
+      return `${lower.slice(0, -1).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:y|ies)`;
+    }
+    const safe = lower.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (/(?:s|x|z|ch|sh)$/u.test(lower)) return `${safe}(?:es)?`;
+    return `${safe}s?`;
+  });
+  const pattern = new RegExp(
+    `(?<![\\p{L}\\p{N}])(${escaped.join("|")})(?![\\p{L}\\p{N}])`,
+    "giu",
+  );
   return excerpt.split(pattern).map((part, index) =>
-    matches.has(part.toLocaleLowerCase()) ? <mark key={index}>{part}</mark> : part,
+    index % 2 === 1 ? <mark key={index}>{part}</mark> : part,
   );
 }
 
