@@ -52,7 +52,7 @@ export default function ContinueReading({ history, onResume, onSelect }) {
               className="btn btn--resume"
               onClick={() => onResume(current)}
             >
-              Resume reading
+              Resume
             </button>
             <button
               type="button"

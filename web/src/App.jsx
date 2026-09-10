@@ -196,7 +196,6 @@ export default function App() {
       aria-live="polite"
       aria-busy={books === null && !waiting && !failed}
     >
-      {waiting && <p className="status">Your search results will appear here.</p>}
       {!waiting && failed && (
         <p className="status">
           {mode === "search"
@@ -244,15 +243,17 @@ export default function App() {
       <div className="masthead-row">
         <div>
           <h1 className="masthead">BookPadi</h1>
-          <p className="masthead-note">Your reading shelf</p>
+          <p className="masthead-note">Open technical knowledge base.</p>
         </div>
         <span className="who">
           <button
             type="button"
-            className="text-btn text-btn--strong"
+            className="submit-book-btn"
             onClick={() => setAddingBook(true)}
+            aria-label="Submit a book"
+            data-tooltip="Submit a book"
           >
-            Submit a book
+            <span aria-hidden="true">+</span>
           </button>
           <button type="button" className="text-btn" onClick={signOut}>
             Sign out
@@ -298,13 +299,6 @@ export default function App() {
           path="/"
           element={
             <>
-              <section className="browse-intro">
-                <h2>Find your next discovery.</h2>
-                <p>Explore openly licensed and freely distributable technical resources.</p>
-                <button type="button" className="text-btn text-btn--strong" onClick={() => show("search")}>
-                  Search inside the books →
-                </button>
-              </section>
               <ContinueReading history={history} onResume={resumeBook} onSelect={openBook} />
               {results}
             </>
@@ -330,7 +324,7 @@ export default function App() {
               <section className="search-view">
                 <h2 className="list-head">Search the library</h2>
                 <p className="search-view__intro">
-                  Find a book by its details, or ask a question to search inside its chapters.
+                  Find a specific book or concept.
                 </p>
                 <Search onSearch={search} initialValue={query} />
               </section>
