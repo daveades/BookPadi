@@ -243,7 +243,7 @@ export default function App() {
       <div className="masthead-row">
         <div>
           <h1 className="masthead">BookPadi</h1>
-          <p className="masthead-note">Open technical knowledge base.</p>
+          <p className="masthead-note">Your technical library.</p>
         </div>
         <span className="who">
           <button
@@ -253,7 +253,9 @@ export default function App() {
             aria-label="Submit a book"
             data-tooltip="Submit a book"
           >
-            <span aria-hidden="true">+</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 4v16M4 12h16" />
+            </svg>
           </button>
           <button type="button" className="text-btn" onClick={signOut}>
             Sign out

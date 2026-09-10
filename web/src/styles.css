@@ -630,12 +630,19 @@ textarea:focus-visible {
   width: 2.75rem;
   height: 2.75rem;
   padding: 0;
-  border: 1px solid var(--ink);
-  background: var(--ink);
-  color: var(--paper);
+  border: 0;
+  background: transparent;
+  color: var(--ink);
   cursor: pointer;
-  font-size: 1.5rem;
-  line-height: 1;
+}
+
+.submit-book-btn svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.75;
+  stroke-linecap: round;
 }
 
 .submit-book-btn::before {
@@ -659,8 +666,7 @@ textarea:focus-visible {
 
 .submit-book-btn:hover,
 .submit-book-btn:focus-visible {
-  background: transparent;
-  color: var(--ink);
+  color: var(--muted);
 }
 
 .submit-book-btn:hover::before,
