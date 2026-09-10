@@ -2,11 +2,53 @@ import { useEffect, useRef, useState } from "react";
 import ePub from "epubjs";
 import PdfView from "./PdfView";
 
+
 export default function Read({ bookId, epub, readFormat, initialLocator, onBack }) {
   const epubHost = useRef(null);
   const frameRef = useRef(null);
   const rendition = useRef(null);
   const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [turning, setTurning] = useState(false);
+  const [turnError, setTurnError] = useState(false);
+  const [bounds, setBounds] = useState({ start: true, end: true });
+  const turnRef = useRef(false);
+
+  async function turn(direction) {
+    const r = rendition.current;
+    if (!r || loading || failed || turnRef.current) return;
+    const location = r.currentLocation();
+    if (direction === "prev" ? location?.atStart : location?.atEnd) return;
+    turnRef.current = true;
+    setTurning(true);
+    setTurnError(false);
+    try {
+      await r[direction]();
+    } catch {
+      if (rendition.current === r) setTurnError(true);
+    } finally {
+      turnRef.current = false;
+      if (rendition.current === r) setTurning(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!epub || loading || failed) return;
+    const r = rendition.current;
+    function onKey(event) {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey ||
+          event.target?.isContentEditable || event.target?.closest?.("input, textarea, select, button, a")) return;
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      turn(event.key === "ArrowLeft" ? "prev" : "next");
+    }
+    window.addEventListener("keydown", onKey);
+    r?.on("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      r?.off("keydown", onKey);
+    };
+  }, [epub, loading, failed]);
   const epubHref = typeof initialLocator?.href === "string" ? initialLocator.href : null;
   const epubAnchor = typeof initialLocator?.anchor === "string" ? initialLocator.anchor : null;
   const epubTarget = epubHref
@@ -23,6 +65,13 @@ export default function Read({ bookId, epub, readFormat, initialLocator, onBack 
     let r;
     let saveTimer;
     let lastCfi = null;
+    let book;
+    setLoading(true);
+    setFailed(false);
+    setTurning(false);
+    setTurnError(false);
+    turnRef.current = false;
+    setBounds({ start: true, end: true });
 
     function flush() {
       if (lastCfi == null) return;
@@ -42,7 +91,8 @@ export default function Read({ bookId, epub, readFormat, initialLocator, onBack 
         });
         if (!res.ok) throw new Error(res.status);
         const buf = await res.arrayBuffer();
-        const book = ePub(buf);
+        if (stopped) return;
+        book = ePub(buf);
         r = book.renderTo(epubHost.current, {
           width: "100%",
           height: "100%",
@@ -62,18 +112,24 @@ export default function Read({ bookId, epub, readFormat, initialLocator, onBack 
           start = saved && saved.position;
         }
 
-        await r.display(start || undefined);
-
+        if (stopped) return;
         r.on("relocated", () => {
+          if (stopped) return;
           const loc = r.currentLocation();
+          setBounds({ start: !!loc?.atStart, end: !!loc?.atEnd });
           const cfi = loc && loc.start && loc.start.cfi;
           if (!cfi) return;
           lastCfi = cfi;
           clearTimeout(saveTimer);
           saveTimer = setTimeout(flush, 300);
         });
+        await r.display(start || undefined);
+        if (stopped) return;
+        const loc = r.currentLocation();
+        setBounds({ start: !!loc?.atStart, end: !!loc?.atEnd });
+        setLoading(false);
       } catch (err) {
-        if (!stopped) setFailed(true);
+        if (!stopped) { setFailed(true); setLoading(false); }
       }
     }
 
@@ -84,7 +140,7 @@ export default function Read({ bookId, epub, readFormat, initialLocator, onBack 
       rendition.current = null;
       clearTimeout(saveTimer);
       flush();
-      if (r) r.destroy();
+      if (book) book.destroy();
     };
   }, [bookId, epub, epubTarget]);
 
@@ -164,7 +220,7 @@ export default function Read({ bookId, epub, readFormat, initialLocator, onBack 
         }
         win.scrollTo(0, Number(saved) || 0);
       } catch {
-        /* no-op */
+
       }
     }
 
@@ -217,7 +273,8 @@ export default function Read({ bookId, epub, readFormat, initialLocator, onBack 
           <button
             type="button"
             className="text-btn"
-            onClick={() => rendition.current && rendition.current.prev()}
+            onClick={() => turn("prev")}
+            disabled={loading || failed || turning || bounds.start}
           >
             Previous
           </button>
@@ -225,14 +282,16 @@ export default function Read({ bookId, epub, readFormat, initialLocator, onBack 
           <button
             type="button"
             className="text-btn"
-            onClick={() => rendition.current && rendition.current.next()}
+            onClick={() => turn("next")}
+            disabled={loading || failed || turning || bounds.end}
           >
             Next
           </button>
         </p>
-        <div ref={epubHost} className="reader__epub">
-          {failed && <p className="reader__error">This book could not be opened.</p>}
-        </div>
+        {loading && <p className="reader__message" role="status">Opening book…</p>}
+        {failed && <p className="reader__message" role="alert">This book could not be opened.</p>}
+        {turnError && <p className="reader__message" role="alert">Could not turn the page. Try again.</p>}
+        <div ref={epubHost} className="reader__epub" aria-busy={loading} />
       </div>
     );
   }

@@ -44,7 +44,7 @@ textarea:focus-visible {
 }
 
 .page {
-  max-width: 46rem;
+  max-width: 50rem;
   margin: 0 auto;
   padding: 2.5rem 1.5rem 5rem;
 }
@@ -181,8 +181,9 @@ textarea:focus-visible {
 .search-match__excerpt {
   margin: 0.45rem 0 0;
   color: #3f3f45;
-  font-size: 0.875rem;
-  line-height: 1.7;
+  font-size: 1rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
 }
 
 .search-match__excerpt mark {
@@ -301,6 +302,7 @@ textarea:focus-visible {
 }
 
 .mode {
+  min-height: 2.75rem;
   padding: 0 0 0.65rem;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -364,21 +366,24 @@ textarea:focus-visible {
 }
 
 .ask__field::placeholder {
-  color: #a9a9b0;
+  color: var(--muted);
 }
 
 .ask__send {
   flex: none;
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
   border: 0;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--ink);
   color: #fff;
   cursor: pointer;
+}
+
+.ask__send:hover:not(:disabled) {
+  background: #39393f;
 }
 
 .ask__send:disabled {
@@ -614,6 +619,42 @@ textarea:focus-visible {
   color: var(--muted);
 }
 
+.who .text-btn {
+  min-height: 2.75rem;
+}
+
+.browse-intro {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.browse-intro h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+.browse-intro p {
+  margin: 0.75rem 0;
+  color: var(--muted);
+  max-width: 36rem;
+}
+
+.browse-intro .text-btn {
+  min-height: 2.75rem;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.book__title,
+.search-result__title,
+.detail__title,
+.submission__title {
+  overflow-wrap: anywhere;
+}
+
 .auth-heading {
   margin: 2.5rem auto 3rem;
   max-width: 22rem;
@@ -790,6 +831,8 @@ textarea:focus-visible {
   justify-content: space-between;
   align-items: baseline;
   margin: 0 0 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
 }
 
 .library__head .list-head {
@@ -917,6 +960,7 @@ textarea:focus-visible {
 
 .detail__format-options {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0.6rem;
   margin-top: 0.75rem;
@@ -1259,20 +1303,18 @@ textarea:focus-visible {
 
   .masthead-row {
     margin-bottom: 1.5rem;
+    flex-wrap: wrap;
   }
 
   .who {
     gap: 0.9rem;
+    flex-wrap: wrap;
   }
 
   .modes {
     gap: 1.25rem;
     overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .modes::-webkit-scrollbar {
-    display: none;
+    scrollbar-width: thin;
   }
 
   .mode {
@@ -1301,6 +1343,7 @@ textarea:focus-visible {
   .continue-card__actions,
   .library-item__actions {
     gap: 0.85rem;
+    flex-wrap: wrap;
   }
 
   .modal-backdrop {
@@ -1314,5 +1357,83 @@ textarea:focus-visible {
     border-right: 0;
     border-bottom: 0;
     border-left: 0;
+  }
+}
+
+.reader {
+  height: 100dvh;
+}
+
+.reader__bar {
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  background: var(--paper);
+}
+
+.reader__bar .text-btn {
+  min-height: 2.75rem;
+}
+
+.reader__page-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.reader__page-form input {
+  width: 4.5rem;
+  min-height: 2.75rem;
+  padding: 0.35rem;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.reader__message {
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+}
+
+.reader__pdf {
+  position: relative;
+  overflow-anchor: none;
+  scrollbar-gutter: stable;
+}
+
+.reader__pdf-page {
+  position: relative;
+  box-sizing: border-box;
+}
+
+.reader__pdf-canvas {
+  flex: none;
+  background: white;
+}
+
+.reader__pdf-label {
+  color: #eee;
+  line-height: 1;
+}
+
+.reader__page-error {
+  position: absolute;
+  inset: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+}
+
+@media (max-width: 520px) {
+  .reader__bar {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .reader__page-form {
+    flex-basis: 100%;
+    justify-content: flex-end;
   }
 }

@@ -142,7 +142,7 @@ export default function App() {
       <div className="page">
         <div className="auth-heading">
           <h1 className="masthead">BookPadi</h1>
-          <p>Your personal shelf for open books.</p>
+          <p>Your open technical knowledge base.</p>
         </div>
         <Auth onSignedIn={setUser} />
       </div>
@@ -215,7 +215,10 @@ export default function App() {
       {!waiting && !failed && books !== null && books.length > 0 && (
         <>
           {mode === "browse" ? (
-            <h2 className="list-head">All books</h2>
+            <div className="library__head">
+              <h2 className="list-head">All books</h2>
+              <span className="library__count">{books.length} {books.length === 1 ? "book" : "books"}</span>
+            </div>
           ) : (
             <p className="status search-summary">
               <strong>{books.length}</strong> {books.length === 1 ? "book" : "books"} for “{query}”
@@ -295,6 +298,13 @@ export default function App() {
           path="/"
           element={
             <>
+              <section className="browse-intro">
+                <h2>Find your next discovery.</h2>
+                <p>Explore openly licensed and freely distributable technical resources.</p>
+                <button type="button" className="text-btn text-btn--strong" onClick={() => show("search")}>
+                  Search inside the books →
+                </button>
+              </section>
               <ContinueReading history={history} onResume={resumeBook} onSelect={openBook} />
               {results}
             </>
