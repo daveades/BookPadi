@@ -154,7 +154,7 @@ export default function SearchResults({ books, query, onSelectBook, onSelectMatc
               </header>
 
               {matches.length > 0 && (
-                <ol className="search-matches">
+                <ol className="search-matches" aria-label={`Relevant passages from ${book.title}`}>
                   {matches.map((match, index) => {
                     const pages = pageLabel(match);
                     const supported = canOpenMatch(match);

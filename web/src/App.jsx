@@ -196,7 +196,7 @@ export default function App() {
       aria-live="polite"
       aria-busy={books === null && !waiting && !failed}
     >
-      {waiting && <p className="status">Search for a title, an author or a topic.</p>}
+      {waiting && <p className="status">Your search results will appear here.</p>}
       {!waiting && failed && (
         <p className="status">
           {mode === "search"
@@ -217,8 +217,8 @@ export default function App() {
           {mode === "browse" ? (
             <h2 className="list-head">All books</h2>
           ) : (
-            <p className="status">
-              {books.length} {books.length === 1 ? "book" : "books"} for {query}
+            <p className="status search-summary">
+              <strong>{books.length}</strong> {books.length === 1 ? "book" : "books"} for “{query}”
             </p>
           )}
           {mode === "search" ? (
@@ -319,7 +319,10 @@ export default function App() {
             <>
               <section className="search-view">
                 <h2 className="list-head">Search the library</h2>
-                <Search onSearch={search} />
+                <p className="search-view__intro">
+                  Find a book by its details, or ask a question to search inside its chapters.
+                </p>
+                <Search onSearch={search} initialValue={query} />
               </section>
               {results}
             </>

@@ -182,6 +182,7 @@ textarea:focus-visible {
   margin: 0.45rem 0 0;
   color: #3f3f45;
   font-size: 0.875rem;
+  line-height: 1.7;
 }
 
 .search-match__excerpt mark {
@@ -193,6 +194,8 @@ textarea:focus-visible {
 .search-match__open {
   margin-top: 0.55rem;
   color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 0.18em;
 }
@@ -1221,8 +1224,28 @@ textarea:focus-visible {
   font-weight: 600;
 }
 
+.search-view {
+  margin-bottom: 2rem;
+}
+
 .search-view .list-head {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.search-view__intro {
+  max-width: 38rem;
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.search-view .ask {
+  margin-bottom: 0;
+}
+
+.search-summary strong {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 @media (max-width: 520px) {
@@ -1243,12 +1266,19 @@ textarea:focus-visible {
   }
 
   .modes {
-    justify-content: space-between;
-    gap: 0.5rem;
+    gap: 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .modes::-webkit-scrollbar {
+    display: none;
   }
 
   .mode {
+    flex: none;
     font-size: 0.8125rem;
+    white-space: nowrap;
   }
 
   .submission,

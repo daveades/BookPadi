@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-export default function Search({ onSearch }) {
-  const [value, setValue] = useState("");
+export default function Search({ onSearch, initialValue = "" }) {
+  const [value, setValue] = useState(initialValue);
 
   return (
     <form
@@ -18,7 +18,7 @@ export default function Search({ onSearch }) {
           rows={1}
           value={value}
           aria-label="Search the library"
-          placeholder="A topic, a title, an author"
+          placeholder="Ask a question, or search by title, author or topic"
           autoComplete="off"
           autoFocus
           onChange={(event) => {
