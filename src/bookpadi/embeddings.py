@@ -1,15 +1,20 @@
+import math
+
 from flask import Flask, jsonify, request
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import CrossEncoder, SentenceTransformer
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 VECTOR_DIMENSIONS = 384
 MAX_BATCH_SIZE = 32
 MAX_TEXT_CHARACTERS = 5000
 MAX_REQUEST_BYTES = 1_000_000
+RERANK_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L6-v2"
+RERANK_BATCH_SIZE = 16
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
 model = SentenceTransformer(MODEL_NAME, device="cpu")
+reranker = CrossEncoder(RERANK_MODEL_NAME, device="cpu")
 
 
 def validate_text(value):
@@ -36,6 +41,7 @@ def health():
         "ok": True,
         "model": MODEL_NAME,
         "dimensions": VECTOR_DIMENSIONS,
+        "reranker": RERANK_MODEL_NAME,
     }
 
 
@@ -82,3 +88,35 @@ def embed_query():
             "vector": vector,
         }
     )
+
+
+@app.post("/rerank")
+def rerank_passages():
+    if request.remote_addr not in ("127.0.0.1", "::1"):
+        return {"error": "reranking is only available locally"}, 403
+    data = request.get_json(silent=True) or {}
+    if not isinstance(data, dict):
+        return {"error": "request body must be a JSON object"}, 400
+    passages = data.get("passages")
+    if not isinstance(passages, list):
+        return {"error": "passages must be a list"}, 400
+    if not passages:
+        return {"error": "passages must not be empty"}, 400
+    if len(passages) > RERANK_BATCH_SIZE:
+        return {"error": f"passages must contain at most {RERANK_BATCH_SIZE} items"}, 400
+    try:
+        question = validate_text(data.get("question"))
+        passages = [validate_text(passage) for passage in passages]
+    except ValueError as error:
+        return {"error": str(error)}, 400
+    scores = [
+        float(score)
+        for score in reranker.predict(
+            [(question, passage) for passage in passages],
+            batch_size=RERANK_BATCH_SIZE,
+            show_progress_bar=False,
+        )
+    ]
+    if len(scores) != len(passages) or any(not math.isfinite(score) for score in scores):
+        raise RuntimeError("reranker returned invalid scores")
+    return jsonify({"model": RERANK_MODEL_NAME, "scores": scores})

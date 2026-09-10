@@ -8,13 +8,15 @@ MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 VECTOR_DIMENSIONS = 384
 MAX_BATCH_SIZE = 32
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
+RERANK_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L6-v2"
+RERANK_BATCH_SIZE = 16
 
 
 class EmbeddingClientError(RuntimeError):
     pass
 
 
-def _post(path, payload, timeout):
+def _post(path, payload, timeout, expected_model=MODEL_NAME, expected_dimensions=VECTOR_DIMENSIONS):
     endpoint = os.environ.get("EMBEDDING_URL", "http://127.0.0.1:8001").rstrip("/")
     try:
         request = urllib.request.Request(
@@ -35,7 +37,9 @@ def _post(path, payload, timeout):
         raise EmbeddingClientError("The embedding service returned invalid JSON.") from error
     if not isinstance(result, dict):
         raise EmbeddingClientError("The embedding service returned an invalid response.")
-    if result.get("model") != MODEL_NAME or result.get("dimensions") != VECTOR_DIMENSIONS:
+    if result.get("model") != expected_model:
+        raise EmbeddingClientError("The embedding service returned an incompatible model.")
+    if expected_dimensions is not None and result.get("dimensions") != expected_dimensions:
         raise EmbeddingClientError("The embedding service returned an incompatible model.")
     return result
 
@@ -68,3 +72,36 @@ def embed_query(text):
         raise ValueError("text must not be empty")
     result = _post("/embed/query", {"text": text}, 5)
     return _validate_vector(result.get("vector"))
+
+
+def rerank(question, passages):
+    if not isinstance(question, str) or not question.strip():
+        raise ValueError("question must not be empty")
+    if (
+        not isinstance(passages, list)
+        or not passages
+        or any(not isinstance(passage, str) or not passage.strip() for passage in passages)
+    ):
+        raise ValueError("passages must contain non-empty text")
+    scores = []
+    for start in range(0, len(passages), RERANK_BATCH_SIZE):
+        batch = passages[start : start + RERANK_BATCH_SIZE]
+        result = _post(
+            "/rerank",
+            {"question": question, "passages": batch},
+            30,
+            RERANK_MODEL_NAME,
+            None,
+        )
+        batch_scores = result.get("scores")
+        if not isinstance(batch_scores, list) or len(batch_scores) != len(batch):
+            raise EmbeddingClientError("The embedding service returned an unexpected number of scores.")
+        if any(
+            not isinstance(score, (int, float))
+            or isinstance(score, bool)
+            or not math.isfinite(score)
+            for score in batch_scores
+        ):
+            raise EmbeddingClientError("The embedding service returned an invalid score.")
+        scores.extend(float(score) for score in batch_scores)
+    return scores

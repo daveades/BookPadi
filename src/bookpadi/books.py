@@ -1,4 +1,5 @@
 import json
+import re
 
 
 READABLE_FORMATS = ("epub", "pdf", "html")
@@ -16,6 +17,15 @@ EXCLUDED_SEARCH_SECTION_TITLES = (
 METADATA_WEIGHT = 0.45
 LEXICAL_WEIGHT = 0.30
 SEMANTIC_WEIGHT = 0.25
+RERANK_CANDIDATE_LIMIT = 30
+RERANK_CHUNK_LIMIT = 10
+RERANK_WINDOW_LIMIT = 60
+RERANK_PASSAGE_LIMIT = 30
+RERANK_PASSAGES_PER_SECTION = 2
+RERANK_WINDOWS_PER_CHUNK = 8
+RERANK_WINDOW_SENTENCES = 2
+RERANK_WINDOW_OVERLAP = 1
+MIN_RERANK_SCORE = 0.20
 
 
 def list_submissions(conn, user_id, is_admin):
@@ -280,7 +290,7 @@ def _lexical_matches(cur, query):
                (select array_agg(a.name order by a.name)
                   from book_author ba join author a on a.id = ba.author_id
                  where ba.book_id = b.id) as authors,
-               bc.section_order, bc.section_title, bc.locator, bc.content,
+               bc.section_order, bc.chunk_order, bc.section_title, bc.locator, bc.content,
                f.name as format,
                ts_rank_cd(bc.search_vector, q.value, 32)::double precision as lexical_score
         from book_chunk bc
@@ -310,7 +320,7 @@ def _semantic_matches(cur, query_embedding, model_version):
                (select array_agg(a.name order by a.name)
                   from book_author ba join author a on a.id = ba.author_id
                  where ba.book_id = b.id) as authors,
-               bc.section_order, bc.section_title, bc.locator, bc.content,
+               bc.section_order, bc.chunk_order, bc.section_title, bc.locator, bc.content,
                f.name as format,
                greatest(0, 1 - (bc.embedding <=> %(embedding)s::vector))::double precision
                    as semantic_score
@@ -353,9 +363,12 @@ def _book_result(results, row):
 
 
 def _add_section_match(result, row, score_name):
+    key = (row["format"], row["section_order"], row["chunk_order"])
     section = result["sections"].setdefault(
-        row["section_order"],
+        key,
         {
+            "section_order": row["section_order"],
+            "chunk_order": row["chunk_order"],
             "section_title": row["section_title"],
             "locator": row["locator"],
             "format": row["format"],
@@ -381,7 +394,93 @@ def _excerpt(text):
     return f"{shortened}..."
 
 
-def search_books(conn, q, query_embedding=None, model_version=None):
+def _passage_windows(section):
+    text = " ".join(section["content"].split())
+    sentences = [sentence.strip() for sentence in re.split(r"(?<=[.!?])\s+", text) if sentence.strip()]
+    if not sentences:
+        return []
+    step = RERANK_WINDOW_SENTENCES - RERANK_WINDOW_OVERLAP
+    windows = []
+    for start in range(0, len(sentences), step):
+        window = dict(section)
+        window["content"] = " ".join(sentences[start : start + RERANK_WINDOW_SENTENCES])
+        windows.append(window)
+        if start + RERANK_WINDOW_SENTENCES >= len(sentences):
+            break
+    return windows
+
+
+def _overlaps_existing(passage, selected):
+    words = set(re.findall(r"\w+", passage["content"].lower()))
+    for existing in selected:
+        if (
+            existing["id"] != passage["id"]
+            or existing["format"] != passage["format"]
+            or existing["section_order"] != passage["section_order"]
+        ):
+            continue
+        existing_words = set(re.findall(r"\w+", existing["content"].lower()))
+        union = words | existing_words
+        if union and len(words & existing_words) / len(union) >= 0.70:
+            return True
+    return False
+
+
+def _rerank_passages(query, results, reranker):
+    candidates = []
+    for result in results.values():
+        for section in result["sections"].values():
+            candidates.append(
+                {
+                    **section,
+                    "id": result["id"],
+                    "retrieval_score": (
+                        LEXICAL_WEIGHT * section["lexical_score"]
+                        + SEMANTIC_WEIGHT * section["semantic_score"]
+                    ),
+                }
+            )
+    candidates.sort(key=lambda candidate: candidate["retrieval_score"], reverse=True)
+    candidates = candidates[:RERANK_CANDIDATE_LIMIT]
+    if not candidates:
+        return []
+    chunk_scores = reranker(query, [candidate["content"] for candidate in candidates])
+    for candidate, score in zip(candidates, chunk_scores, strict=True):
+        candidate["rerank_score"] = score
+    candidates.sort(
+        key=lambda candidate: (candidate["rerank_score"], candidate["retrieval_score"]),
+        reverse=True,
+    )
+    windows = []
+    for candidate in candidates[:RERANK_CHUNK_LIMIT]:
+        windows.extend(_passage_windows(candidate)[:RERANK_WINDOWS_PER_CHUNK])
+    windows = windows[:RERANK_WINDOW_LIMIT]
+    if not windows:
+        return []
+    window_scores = reranker(query, [window["content"] for window in windows])
+    for window, score in zip(windows, window_scores, strict=True):
+        window["rerank_score"] = score
+    windows = [window for window in windows if window["rerank_score"] >= MIN_RERANK_SCORE]
+    windows.sort(
+        key=lambda window: (window["rerank_score"], window["retrieval_score"]),
+        reverse=True,
+    )
+    selected = []
+    section_counts = {}
+    for window in windows:
+        section_key = (window["id"], window["format"], window["section_order"])
+        if section_counts.get(section_key, 0) >= RERANK_PASSAGES_PER_SECTION:
+            continue
+        if _overlaps_existing(window, selected):
+            continue
+        selected.append(window)
+        section_counts[section_key] = section_counts.get(section_key, 0) + 1
+        if len(selected) == RERANK_PASSAGE_LIMIT:
+            break
+    return selected
+
+
+def search_books(conn, q, query_embedding=None, model_version=None, reranker=None):
     query = q.strip()
     if not query:
         return []
@@ -403,6 +502,12 @@ def search_books(conn, q, query_embedding=None, model_version=None):
     for row in semantic_rows:
         _add_section_match(_book_result(results, row), row, "semantic_score")
 
+    reranked_passages = _rerank_passages(query, results, reranker) if reranker else None
+    passages_by_book = {}
+    if reranked_passages is not None:
+        for passage in reranked_passages:
+            passages_by_book.setdefault(passage["id"], []).append(passage)
+
     ranked = []
     for result in results.values():
         sections = list(result.pop("sections").values())
@@ -414,19 +519,26 @@ def search_books(conn, q, query_embedding=None, model_version=None):
         sections.sort(key=lambda section: section["score"], reverse=True)
         best_lexical = max((section["lexical_score"] for section in sections), default=0.0)
         best_semantic = max((section["semantic_score"] for section in sections), default=0.0)
+        metadata_score = result.pop("metadata_score")
+        passages = passages_by_book.get(result["id"], []) if reranked_passages is not None else sections
+        best_rerank = max((passage.get("rerank_score", 0.0) for passage in passages), default=0.0)
         result["score"] = (
-            METADATA_WEIGHT * result.pop("metadata_score")
-            + LEXICAL_WEIGHT * best_lexical
-            + SEMANTIC_WEIGHT * best_semantic
+            METADATA_WEIGHT * metadata_score + best_rerank
+            if reranked_passages is not None
+            else (
+                METADATA_WEIGHT * metadata_score
+                + LEXICAL_WEIGHT * best_lexical
+                + SEMANTIC_WEIGHT * best_semantic
+            )
         )
         result["matches"] = [
             {
-                "section_title": section["section_title"],
-                "locator": section["locator"],
-                "format": section["format"],
-                "excerpt": _excerpt(section["content"]),
+                "section_title": passage["section_title"],
+                "locator": passage["locator"],
+                "format": passage["format"],
+                "excerpt": _excerpt(passage["content"]),
             }
-            for section in sections[:SEARCH_SECTION_LIMIT]
+            for passage in passages[:SEARCH_SECTION_LIMIT]
         ]
         ranked.append(result)
 

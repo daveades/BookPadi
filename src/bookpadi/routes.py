@@ -95,12 +95,21 @@ def search():
         except embedding_client.EmbeddingClientError:
             pass
     with db.connect() as conn:
-        return books.search_books(
-            conn,
-            query,
-            query_embedding,
-            embedding_client.MODEL_NAME,
-        )
+        try:
+            return books.search_books(
+                conn,
+                query,
+                query_embedding,
+                embedding_client.MODEL_NAME,
+                embedding_client.rerank,
+            )
+        except embedding_client.EmbeddingClientError:
+            return books.search_books(
+                conn,
+                query,
+                query_embedding,
+                embedding_client.MODEL_NAME,
+            )
 
 
 @app.get("/books/<int:book_id>")
