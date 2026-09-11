@@ -378,7 +378,7 @@ def extract_metadata(stream_or_bytes, format_name):
 
 
 def ingest_file(conn, file_path, title=None, authors=None, language=None, topics=None):
-    from bookpadi import books, storage
+    from xaperio import books, storage
 
     if not os.path.isfile(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
@@ -407,7 +407,7 @@ def ingest_file(conn, file_path, title=None, authors=None, language=None, topics
     final_language = normalize_language(language or meta.get("language") or "en")
 
     # Generate slug stem
-    from bookpadi.routes import _stem
+    from xaperio.routes import _stem
 
     stem = _stem(final_title)
 
@@ -452,9 +452,9 @@ def ingest_file(conn, file_path, title=None, authors=None, language=None, topics
 
 if __name__ == "__main__":
     import argparse
-    from bookpadi import db
+    from xaperio import db
 
-    parser = argparse.ArgumentParser(description="BookPadi book ingestion CLI")
+    parser = argparse.ArgumentParser(description="Xaperio book ingestion CLI")
     parser.add_argument("file", help="Path to the book file to ingest (.epub, .pdf, .html)")
     parser.add_argument("--title", help="Override book title")
     parser.add_argument("--author", action="append", help="Override book author(s)")

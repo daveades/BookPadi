@@ -3,7 +3,7 @@ import json
 
 from psycopg.types.json import Jsonb
 
-from bookpadi import chunks, content, db, embedding_client, storage
+from xaperio import chunks, content, db, embedding_client, storage
 
 INDEX_VERSION = 1
 MODEL_VERSION = embedding_client.MODEL_NAME
@@ -171,7 +171,7 @@ def retry_book(book_id):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Process one BookPadi search indexing job")
+    parser = argparse.ArgumentParser(description="Process one Xaperio search indexing job")
     parser.add_argument("--retry", type=int, metavar="BOOK_ID")
     args = parser.parse_args()
     if args.retry is not None:

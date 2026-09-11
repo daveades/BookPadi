@@ -141,7 +141,7 @@ export default function App() {
     return (
       <div className="page">
         <div className="auth-heading">
-          <h1 className="masthead">BookPadi</h1>
+          <h1 className="masthead">Xaperio</h1>
           <p>Your open technical knowledge base.</p>
         </div>
         <Auth onSignedIn={setUser} />
@@ -242,7 +242,7 @@ export default function App() {
     <div className="page">
       <div className="masthead-row">
         <div>
-          <h1 className="masthead">BookPadi</h1>
+          <h1 className="masthead">Xaperio</h1>
           <p className="masthead-note">Your technical library.</p>
         </div>
         <span className="who">

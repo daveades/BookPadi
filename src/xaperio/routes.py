@@ -5,7 +5,7 @@ import psycopg
 from flask import Flask, Response, abort, jsonify, request, session
 from werkzeug.http import http_date
 
-from bookpadi import books, db, embedding_client, ingest, progress, rate_limits, storage, users
+from xaperio import books, db, embedding_client, ingest, progress, rate_limits, storage, users
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-secret-key")

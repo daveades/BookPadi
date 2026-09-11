@@ -1,6 +1,6 @@
 import unittest
 
-from bookpadi.chunks import chunk_sections, text_units
+from xaperio.chunks import chunk_sections, text_units
 
 
 class ChunkingTests(unittest.TestCase):

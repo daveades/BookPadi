@@ -1,5 +1,5 @@
-# BookPadi Architecture
-An explanation or walkthrough of how I came about the data model for bookpadi's MVP
+# Xaperio Architecture
+An explanation or walkthrough of how I came about the data model for Xaperio's MVP
 
 ## User Flow
 For the MVP, I wanted the application to simply provide a searchable library of openly licensed books, which meant that the backend would need to support the following four operations at minimum:
@@ -138,7 +138,7 @@ Applying those two questions to each relationship gave:
 | Book and Format | a book must have at least one format | a format can exist without any book association |
 | Book and Topic | a book must have at least one topic | a topic can exist without any book association |
 
-![BookPadi ER Diagram](./attachments/ERdiagram.svg)
+![Xaperio ER Diagram](./attachments/ERdiagram.svg)
 
 
-[Read More](./attachments/Walktrough%20BookPadi%20MVP%20Architecture.pdf)
+[Read More](./attachments/Walktrough%20Xaperio%20MVP%20Architecture.pdf)

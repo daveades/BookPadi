@@ -6,7 +6,7 @@ from unittest.mock import patch
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
-from bookpadi import content
+from xaperio import content
 
 
 class ContentExtractionTests(unittest.TestCase):

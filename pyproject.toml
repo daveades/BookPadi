@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bookpadi"
+name = "xaperio"
 version = "0.1.0"
 description = "A searchable library of openly licensed books"
 requires-python = ">=3.12"
@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-bookpadi-index = "bookpadi.indexing:main"
+xaperio-index = "xaperio.indexing:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

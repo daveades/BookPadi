@@ -1,4 +1,4 @@
--- BookPadi MVP schema.
+-- Xaperio MVP schema.
 
 create extension if not exists vector;
 

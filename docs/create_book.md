@@ -1,10 +1,10 @@
 # CreateBook
 
-An explanation or walkthrough of how I came about the logic for adding a book to bookpadi
+An explanation or walkthrough of how I came about the logic for adding a book to Xaperio
 
 ## The operation
 
-CreateBook performs all database changes required to be able to create a new book entry in BookPad in just a single PostgreSQL transaction so that if any step fails, PostgreSQL can roll back all the changes made during the operation. This allows CreateBook to treat the creation of the book row, authors, topics and formats as one as if it were one operation.
+CreateBook performs all database changes required to be able to create a new book entry in Xaperio in just a single PostgreSQL transaction so that if any step fails, PostgreSQL can roll back all the changes made during the operation. This allows CreateBook to treat the creation of the book row, authors, topics and formats as one as if it were one operation.
 
 Adding a book is a little more than just inserting a row into the database. A book with a record in postgres that has no corresponding file object can't be accessed and vice versa. The operation is only going to be complete when both the postgres store (book metdata) and the file store (actual files) are succesful. If there are issues when trying to insert book metadata (PostgreSQL) it's possible to rollback the chnages but for file storage it's not as straightfoward and you can see the effects of this [here](#ordering-the-two-stores) and why it is the better option.
 
@@ -63,7 +63,7 @@ CreateBook does no file work and makes no network calls. The files are uploaded 
 
 This is what keeps the transaction honest. Everything inside the transaction is database work, and database work can be undone. An upload inside a transaction would be a block that only half rolls back, which is worse than having no block at all.
 
-It also knows nothing about where the book came from. It receives a book that has already been put into bookpadi's shape, so adding a second source later does not change it.
+It also knows nothing about where the book came from. It receives a book that has already been put into Xaperio's shape, so adding a second source later does not change it.
 
 ## Rules the database cannot enforce
 

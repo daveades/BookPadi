@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 
-from bookpadi import ingest
+from xaperio import ingest
 
 MAX_EPUB_ENTRIES = 10_000
 MAX_EPUB_EXPANDED_BYTES = 512 * 1024 * 1024
@@ -116,7 +116,7 @@ def extract_html_sections(data, href=None):
     headings = list(root.find_all(("h1", "h2", "h3")))
     markers = []
     for position, heading in enumerate(headings, start=1):
-        marker = f"\ue000BOOKPADI_SECTION_{position}\ue001"
+        marker = f"\ue000XAPERIO_SECTION_{position}\ue001"
         title = normalize_text(heading.get_text(" ", strip=True)) or f"Section {position}"
         locator = {}
         if href:

@@ -1,7 +1,7 @@
 import copy
 import re
 
-from bookpadi.content import normalize_text
+from xaperio.content import normalize_text
 
 DEFAULT_TARGET_WORDS = 140
 DEFAULT_MAX_WORDS = 180
