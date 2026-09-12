@@ -613,7 +613,7 @@ textarea:focus-visible {
 
 .who {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.75rem;
   font-size: 0.875rem;
   color: var(--muted);
