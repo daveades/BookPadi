@@ -151,6 +151,13 @@ export default function Book({ bookId, canDelete, onRead, onBack, onDeleted }) {
         <a href={book.license_url}>{book.license_name}</a>
       </p>
 
+      {book.source_url && (
+        <p className="detail__row">
+          <span className="detail__label">Source:</span>{" "}
+          <a href={book.source_url}>Original publication</a>
+        </p>
+      )}
+
       {canDelete && (
         <div className="detail__admin">
           <button

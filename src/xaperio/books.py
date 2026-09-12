@@ -199,8 +199,8 @@ def get_book(conn, book_id):
     with conn.cursor() as cur:
         cur.execute("""
             select b.id, b.title, b.description, b.language, b.pub_year,
-                   b.publisher, b.edition, b.moderation_status, b.submitted_by,
-                   l.name as license_name, l.license_url,
+                   b.publisher, b.edition, b.source_url, b.moderation_status,
+                   b.submitted_by, l.name as license_name, l.license_url,
                    (select array_agg(a.name order by a.name)
                       from book_author ba join author a on a.id = ba.author_id
                      where ba.book_id = b.id) as authors,
@@ -592,6 +592,11 @@ def create_book(conn, book):
     lic_name = license_data.get("name") or "Open Access"
     lic_url = license_data.get("url") or "https://creativecommons.org/"
 
+    moderation_status = book.get("moderation_status", "approved")
+    index_status = book.get(
+        "index_status", "pending" if moderation_status == "approved" else "unindexed"
+    )
+
     with conn.transaction(), conn.cursor() as cur:
         cur.execute(
             "insert into license (name, license_url) values (%s, %s) on conflict (lower(name)) do nothing",
@@ -602,14 +607,16 @@ def create_book(conn, book):
 
         cur.execute("""
             insert into books (
-                title, description, language, pub_year, publisher, edition, cover_ref,
-                license_id, moderation_status, submitted_by
+                title, description, language, pub_year, publisher, edition,
+                source_url, cover_ref, license_id, moderation_status, submitted_by,
+                index_status
             )
-            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             returning id
         """, (book["title"], book.get("description"), book["language"], book.get("pub_year"),
-              book.get("publisher"), book.get("edition"), book.get("cover_ref"), license_id,
-              book.get("moderation_status", "approved"), book.get("submitted_by")))
+              book.get("publisher"), book.get("edition"), book.get("source_url"),
+              book.get("cover_ref"), license_id, moderation_status, book.get("submitted_by"),
+              index_status))
         book_id = cur.fetchone()["id"]
 
         for name in book["authors"]:

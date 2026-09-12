@@ -67,6 +67,7 @@ create table books (
     pub_year    int check (pub_year between 1 and 2100),
     publisher   text,
     edition     text,
+    source_url  text check (source_url is null or btrim(source_url) <> ''),
     cover_ref   text,
     license_id  bigint not null references license (id) on delete restrict,
     moderation_status text not null default 'pending'
@@ -85,6 +86,8 @@ create table books (
 
 create index on books (license_id);
 create index on books (submitted_by);
+create unique index books_source_url_idx
+    on books (source_url) where source_url is not null;
 create index books_pending_index_idx
     on books (submitted_at, id)
     where moderation_status = 'approved' and index_status = 'pending';
