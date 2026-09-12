@@ -4,6 +4,7 @@ venv/
 .env
 .env.local
 .vercel/
-bookpadi.egg-info/
+xaperio.egg-info/
 media/
-docs/search/
+docs/
+bookpadi.egg-info/

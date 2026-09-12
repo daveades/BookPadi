@@ -1,10 +1,11 @@
 :root {
-  --paper: #fbfaf7;
+  --paper: #faf9f6;
   --surface: #ffffff;
-  --ink: #17171b;
-  --muted: #6c6c74;
-  --rule: #dfddd7;
-  --soft: #f1efe9;
+  --ink: #242a27;
+  --muted: #686f69;
+  --rule: #dedfd7;
+  --soft: #f0f1eb;
+  --accent: #355d4b;
   --sans: "Nunito Sans", system-ui, sans-serif;
 }
 
@@ -46,11 +47,11 @@ textarea:focus-visible {
 .page {
   max-width: 50rem;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 5rem;
+  padding: 3.25rem 1.5rem 5rem;
 }
 
 .masthead {
-  font-size: 1.375rem;
+  font-size: 1.65rem;
   font-weight: 800;
   letter-spacing: -0.025em;
   line-height: 1.2;
@@ -71,9 +72,10 @@ textarea:focus-visible {
 }
 
 .list-head {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.025em;
+  line-height: 1.35;
   margin: 0 0 0.8rem;
 }
 
@@ -91,7 +93,7 @@ textarea:focus-visible {
 }
 
 .search-result {
-  padding: 1.5rem 0;
+  padding: 1.75rem 0;
   border-top: 1px solid var(--rule);
 }
 
@@ -180,7 +182,7 @@ textarea:focus-visible {
 
 .search-match__excerpt {
   margin: 0.45rem 0 0;
-  color: #3f3f45;
+  color: #414a43;
   font-size: 1rem;
   line-height: 1.8;
   overflow-wrap: anywhere;
@@ -188,13 +190,15 @@ textarea:focus-visible {
 
 .search-match__excerpt mark {
   padding: 0 0.08em;
-  background: #ffed9b;
+  background: #f5e7ac;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
   color: inherit;
 }
 
 .search-match__open {
   margin-top: 0.55rem;
-  color: var(--ink);
+  color: var(--accent);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: underline;
@@ -230,17 +234,18 @@ textarea:focus-visible {
   gap: 1.1rem;
   align-items: center;
   width: 100%;
-  padding: 1.15rem 0.25rem;
+  padding: 1.35rem 0.5rem;
   border: 0;
   background: none;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
+  transition: background 160ms ease;
 }
 
 .book__select:hover {
-  background: rgba(23, 23, 27, 0.025);
+  background: var(--soft);
 }
 
 .book__cover {
@@ -266,12 +271,14 @@ textarea:focus-visible {
 .book__title {
   display: block;
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.35;
 }
 
 .book__select:hover .book__title {
+  color: var(--accent);
   text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .book__authors {
@@ -303,7 +310,7 @@ textarea:focus-visible {
 
 .mode {
   min-height: 2.75rem;
-  padding: 0 0 0.65rem;
+  padding: 0.25rem 0 0.85rem;
   border: 0;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
@@ -312,6 +319,7 @@ textarea:focus-visible {
   font-family: inherit;
   font-size: 0.9375rem;
   cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
 }
 
 .mode:hover {
@@ -319,9 +327,9 @@ textarea:focus-visible {
 }
 
 .mode--on {
-  color: var(--ink);
-  font-weight: 600;
-  border-bottom-color: var(--ink);
+  color: var(--accent);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
 }
 
 .ask {
@@ -334,7 +342,8 @@ textarea:focus-visible {
   gap: 0.75rem;
   padding: 0.7rem 0.7rem 0.7rem 1.1rem;
   border: 1px solid var(--rule);
-  border-radius: 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(36, 42, 39, 0.035);
   background: var(--surface);
   transition:
     border-color 160ms ease,
@@ -342,8 +351,8 @@ textarea:focus-visible {
 }
 
 .ask__box:focus-within {
-  border-color: var(--ink);
-  box-shadow: 0 0 0 3px rgba(23, 23, 27, 0.07);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(53, 93, 75, 0.1);
 }
 
 .ask__field {
@@ -376,14 +385,16 @@ textarea:focus-visible {
   min-height: 2.75rem;
   padding: 0.5rem 1rem;
   border: 0;
-  border-radius: 0;
-  background: var(--ink);
+  border-radius: 4px;
+  font-weight: 700;
+  transition: background 160ms ease;
+  background: var(--accent);
   color: #fff;
   cursor: pointer;
 }
 
 .ask__send:hover:not(:disabled) {
-  background: #39393f;
+  background: #284837;
 }
 
 .ask__send:disabled {
@@ -419,10 +430,11 @@ textarea:focus-visible {
 
 .btn {
   display: inline-block;
+  min-height: 2.75rem;
   padding: 0.6rem 1.75rem;
-  border: 1px solid var(--ink);
-  border-radius: 0;
-  background: var(--ink);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--accent);
   color: var(--paper);
   font-family: inherit;
   font-size: 0.9375rem;
@@ -434,8 +446,8 @@ textarea:focus-visible {
 }
 
 .btn:hover:not(:disabled) {
-  background: transparent;
-  color: var(--ink);
+  background: #284837;
+  color: #fff;
 }
 
 .detail__nav {
@@ -444,7 +456,7 @@ textarea:focus-visible {
 
 .detail__head {
   display: flex;
-  gap: 1.25rem;
+  gap: 1.75rem;
   align-items: flex-start;
   margin: 0 0 1.5rem;
 }
@@ -458,7 +470,8 @@ textarea:focus-visible {
 }
 
 .detail__title {
-  font-size: 1.375rem;
+  font-size: 1.65rem;
+  letter-spacing: -0.025em;
   font-weight: 700;
   line-height: 1.3;
   margin: 0;
@@ -496,6 +509,7 @@ textarea:focus-visible {
 
 .detail__blurb {
   margin: 0 0 1.75rem;
+  line-height: 1.85;
   padding-top: 1.5rem;
   border-top: 1px solid var(--rule);
 }
@@ -567,7 +581,7 @@ textarea:focus-visible {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  background: #555;
+  background: #e2e4de;
 }
 
 .reader__pdf-page {
@@ -579,7 +593,7 @@ textarea:focus-visible {
 
 .reader__pdf-canvas {
   display: block;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 16px rgba(24, 34, 28, 0.12);
 }
 
 .reader__pdf-label {
@@ -598,7 +612,7 @@ textarea:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin: 0 0 2rem;
+  margin: 0 0 2.5rem;
 }
 
 .masthead-row .masthead {
@@ -607,7 +621,7 @@ textarea:focus-visible {
 
 .masthead-note {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   margin: 0.2rem 0 0;
 }
 
@@ -621,6 +635,7 @@ textarea:focus-visible {
 
 .who .text-btn {
   min-height: 2.75rem;
+  white-space: nowrap;
 }
 
 .submit-book-btn {
@@ -726,14 +741,17 @@ textarea:focus-visible {
   flex-direction: column;
   gap: 0.35rem;
   font-size: 0.875rem;
-  color: var(--muted);
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .field input {
   min-height: 2.75rem;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--rule);
-  border-radius: 0;
+  border-radius: 4px;
+  font-weight: 400;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
   background: #fff;
   color: var(--ink);
   font-family: inherit;
@@ -742,7 +760,8 @@ textarea:focus-visible {
 
 .field input:focus {
   outline: none;
-  border-color: var(--ink);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(53, 93, 75, 0.1);
 }
 
 .auth__error {
@@ -1022,12 +1041,13 @@ textarea:focus-visible {
 .modal {
   background: var(--surface);
   border: 1px solid var(--rule);
+  border-radius: 8px;
   width: 100%;
   max-width: 36rem;
   max-height: 90vh;
   overflow-y: auto;
   padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 24px 80px rgba(24, 34, 28, 0.2);
 }
 
 .modal__head {
@@ -1227,10 +1247,11 @@ textarea:focus-visible {
 }
 
 .dropzone {
-  border: 2px dashed var(--rule);
+  border: 1px dashed #a4b1a5;
+  border-radius: 4px;
   padding: 1.5rem;
   text-align: center;
-  background: #fff;
+  background: var(--paper);
   transition: border-color 0.15s ease;
 }
 
@@ -1275,7 +1296,9 @@ textarea:focus-visible {
 .field textarea {
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--rule);
-  border-radius: 0;
+  border-radius: 4px;
+  font-weight: 400;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
   background: #fff;
   color: var(--ink);
   font-family: inherit;
@@ -1286,7 +1309,8 @@ textarea:focus-visible {
 
 .field textarea:focus {
   outline: none;
-  border-color: var(--ink);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(53, 93, 75, 0.1);
 }
 
 .field__hint {
@@ -1296,16 +1320,18 @@ textarea:focus-visible {
 }
 
 .search-view {
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .search-view .list-head {
-  margin-bottom: 0.35rem;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  letter-spacing: -0.035em;
+  margin-bottom: 0.6rem;
 }
 
 .search-view__intro {
   max-width: 38rem;
-  margin: 0 0 1rem;
+  margin: 0 0 1.25rem;
   color: var(--muted);
   font-size: 0.875rem;
 }
@@ -1379,6 +1405,7 @@ textarea:focus-visible {
   }
 
   .modal {
+    border-radius: 8px 8px 0 0;
     max-height: 94vh;
     padding: 1.25rem 1rem;
     border-right: 0;
@@ -1440,7 +1467,7 @@ textarea:focus-visible {
 }
 
 .reader__pdf-label {
-  color: #eee;
+  color: #505a52;
   line-height: 1;
 }
 
@@ -1462,5 +1489,47 @@ textarea:focus-visible {
   .reader__page-form {
     flex-basis: 100%;
     justify-content: flex-end;
+  }
+}
+
+::selection {
+  background: #dce7db;
+  color: var(--ink);
+}
+
+.book__cover,
+.search-result__cover,
+.continue-card__cover,
+.library-item__cover,
+.detail__cover {
+  border-radius: 2px 4px 4px 2px;
+  box-shadow: 1px 3px 8px rgba(36, 42, 39, 0.12);
+}
+
+.text-btn,
+.submit-book-btn {
+  transition: color 160ms ease;
+}
+
+.search-result__title button,
+.library-item__title {
+  text-underline-offset: 0.2em;
+}
+
+.search-result__title button:hover,
+.library-item__title:hover {
+  color: var(--accent);
+}
+
+.reader__page-form input {
+  border-radius: 4px;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
   }
 }
